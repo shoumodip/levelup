@@ -1,0 +1,81 @@
+@font-face {
+    src: url("fonts/NoContinue.ttf");
+    font-family: "No Continue";
+}
+
+* {
+    font-size: 1.8rem;
+    font-family: No Continue;
+
+    color: #FFFFFF;
+    background-color: #181818;
+}
+
+h1 {
+    margin: 0.0rem;
+    font-size: 2.0rem;
+    font-weight: normal;
+}
+
+h2 {
+    margin: 0.0rem;
+    font-size: 1.5rem;
+    font-weight: normal;
+
+    color: #AAAAAA;
+}
+
+html, body {
+    margin: 0;
+    height: 100%;
+}
+
+body, .vertical {
+    gap: 0.8rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.boxed {
+    cursor: default;
+    padding: 1.0rem;
+
+    border: 3px solid #606060;
+    border-radius: 0.3rem;
+}
+
+.center {
+    align-items: center;
+    justify-content: center;
+}
+
+.padding {
+    padding: 0.8rem;
+}
+
+.stretch {
+    width: 100%;
+}
+
+.horizontal {
+    gap: 0.8rem;
+    display: flex;
+}
+
+select {
+	appearance: none;
+}
+
+button:hover {
+    background-color: #404040;
+}
+
+input, button, select {
+    padding: 1.0rem;
+    outline: none;
+
+    border: 3px solid #606060;
+    border-radius: 0.3rem;
+
+    background-color: #303030;
+}
