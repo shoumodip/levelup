@@ -29,9 +29,14 @@ function Maybe(element, cond) {
     }
 }
 
-function Input(title) {
+function Input(title, type) {
     const input = document.createElement("input")
     input.placeholder = title
+
+    if (type !== null) {
+        input.type = type
+    }
+
     return input
 }
 
@@ -81,7 +86,7 @@ function PaddedPage(...children) {
     return Class(Vertical(...children), "padding")
 }
 
-// State
+// Main
 const tasks = []
 
 const profile = {
@@ -89,14 +94,17 @@ const profile = {
     VIT: 0,
     INT: 0,
     PRC: 0,
-    level: 1
+    level: 1,
+    points: 0
 }
+
+const rewards = []
 
 function Load() {
     {
         const data = localStorage["tasks"]
         if (data) {
-            const lines = localStorage["tasks"].split("\n")
+            const lines = data.split("\n")
             for (const line of lines) {
                 const i = line.indexOf(" ")
                 const j = line.indexOf(" ", i + 1)
@@ -113,23 +121,52 @@ function Load() {
     {
         const data = localStorage["profile"]
         if (data) {
-            const lines = localStorage["profile"].split(" ")
-            profile.level = parseInt(lines[0])
-            profile.STR = parseInt(lines[1])
-            profile.VIT = parseInt(lines[2])
-            profile.INT = parseInt(lines[3])
-            profile.PRC = parseInt(lines[4])
+            const lines = data.split(" ")
+            profile.STR = parseInt(lines[0])
+            profile.VIT = parseInt(lines[1])
+            profile.INT = parseInt(lines[2])
+            profile.PRC = parseInt(lines[3])
+            profile.level = parseInt(lines[4])
+            profile.points = parseInt(lines[5])
+        }
+    }
+
+    {
+        const data = localStorage["rewards"]
+        if (data) {
+            const lines = data.split("\n")
+            for (const line of lines) {
+                const i = line.indexOf(" ")
+                rewards.push({
+                    cost: parseInt(line.slice(0, i)),
+                    title: line.slice(i + 1)
+                })
+            }
         }
     }
 }
 
 function Save() {
-    localStorage["tasks"] = tasks.map((task) => task.last + " " + task.type + " " + task.title).join("\n")
-    localStorage["profile"] = profile.level
-        + " " + profile.STR
+    localStorage["tasks"] = tasks.map((v) => v.last + " " + v.type + " " + v.title).join("\n")
+
+    localStorage["profile"] = profile.STR
         + " " + profile.VIT
         + " " + profile.INT
         + " " + profile.PRC
+        + " " + profile.level
+        + " " + profile.points
+
+    localStorage["rewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n")
+}
+
+function Stat(label, value) {
+    return Class(
+        Horizontal(
+            Class(Header(label, 1), "stretch"),
+            Header(value, 1),
+        ),
+        "boxed"
+    )
 }
 
 function Task(task, index) {
@@ -143,12 +180,13 @@ function Task(task, index) {
                     ),
                     "stretch"
                 ),
-                () => EditPage(index)
+                () => TaskEditPage(index)
             ),
             Maybe(
                 Button(
                     "Done", () => {
                         task.last = Today()
+                        profile.points++
                         profile[task.type]++
 
                         Save()
@@ -163,7 +201,39 @@ function Task(task, index) {
     )
 }
 
-function EditPage(index) {
+function Reward(reward, index) {
+    return Class(
+        Horizontal(
+            Click(
+                Class(
+                    Vertical(
+                        Header(reward.title, 1),
+                        Header(reward.cost, 2)
+                    ),
+                    "stretch"
+                ),
+                () => RewardEditPage(index)
+            ),
+            Button(
+                "Buy", () => {
+                    if (profile.points < reward.cost) {
+                        NotifyPage("Not enough points", RewardsPage)
+                        return
+                    }
+
+                    profile.points -= reward.cost
+                    Save()
+
+                    NotifyPage("Reward: " + reward.title + "!", RewardsPage)
+                },
+                true
+            )
+        ),
+        "boxed"
+    )
+}
+
+function TaskEditPage(index) {
     const title = Input("Title")
     const type = Select("STR", "VIT", "INT", "PRC")
 
@@ -209,6 +279,51 @@ function EditPage(index) {
     )
 }
 
+function RewardEditPage(index) {
+    const title = Input("Title")
+    const cost = Input("Cost", "number")
+
+    if (index !== -1) {
+        cost.value = rewards[index].cost
+        title.value = rewards[index].title
+    }
+
+    document.body.replaceChildren(
+        PaddedPage(
+            Horizontal(
+                Button("Back", RewardsPage),
+                Button("Done", () => {
+                    if (title.value !== "" && cost.value !== "") {
+                        if (index === -1) {
+                            rewards.push({
+                                cost: cost.value,
+                                title: title.value
+                            })
+                        } else {
+                            rewards[index].cost = cost.value
+                            rewards[index].title = title.value
+                        }
+
+                        Save()
+                        RewardsPage()
+                    }
+                }),
+                Maybe(
+                    Button("Remove", () => {
+                        rewards.splice(index, 1)
+
+                        Save()
+                        RewardsPage()
+                    }),
+                    index !== -1
+                )
+            ),
+            title,
+            cost
+        ),
+    )
+}
+
 function MainPage() {
     if (profile.STR >= 10 && profile.VIT >= 10 && profile.INT >= 10 && profile.PRC >= 10) {
         profile.level++
@@ -226,7 +341,8 @@ function MainPage() {
         PaddedPage(
             Horizontal(
                 Button("Profile", ProfilePage),
-                Button("Add", () => EditPage(-1))
+                Button("Rewards", RewardsPage),
+                Button("Add", () => TaskEditPage(-1))
             ),
             ...tasks.map(Task)
         )
@@ -237,46 +353,33 @@ function ProfilePage() {
     document.body.replaceChildren(
         PaddedPage(
             Button("Back", MainPage),
-            Class(
-                Horizontal(
-                    Class(Header("Level", 1), "stretch"),
-                    Header(profile.level, 1),
-                ),
-                "boxed"
-            ),
-            Class(
-                Horizontal(
-                    Class(Header("STR", 1), "stretch"),
-                    Header(profile.STR + "/10", 1),
-                ),
-                "boxed"
-            ),
-            Class(
-                Horizontal(
-                    Class(Header("VIT", 1), "stretch"),
-                    Header(profile.VIT + "/10", 1),
-                ),
-                "boxed"
-            ),
-            Class(
-                Horizontal(
-                    Class(Header("INT", 1), "stretch"),
-                    Header(profile.INT + "/10", 1),
-                ),
-                "boxed"
-            ),
-            Class(
-                Horizontal(
-                    Class(Header("PRC", 1), "stretch"),
-                    Header(profile.PRC + "/10", 1),
-                ),
-                "boxed"
-            )
+            Stat("Level", profile.level),
+            Stat("STR", profile.STR + "/10"),
+            Stat("VIT", profile.VIT + "/10"),
+            Stat("INT", profile.INT + "/10"),
+            Stat("PRC", profile.PRC + "/10"),
         )
     )
 }
 
-function NotifyPage(message) {
+function RewardsPage() {
+    document.body.replaceChildren(
+        PaddedPage(
+            Horizontal(
+                Button("Back", MainPage),
+                Button("Add", () => RewardEditPage(-1)),
+            ),
+            Stat("Points", profile.points),
+            ...rewards.map(Reward)
+        )
+    )
+}
+
+function NotifyPage(message, back) {
+    if (back === null) {
+        back = MainPage
+    }
+
     document.body.classList.add("center")
     document.body.replaceChildren(
         Class(
@@ -284,7 +387,7 @@ function NotifyPage(message) {
                 Header(message, 1),
                 Button("OK", () => {
                     document.body.classList.remove("center")
-                    MainPage()
+                    back()
                 }),
             ),
             "boxed",
