@@ -1,7 +1,7 @@
 // Time
 const DAY = 8.64e7
 
-function Time() {
+function Today() {
     const time = new Date()
     time.setHours(0)
     time.setMinutes(0)
@@ -148,7 +148,7 @@ function Task(task, index) {
             Maybe(
                 Button(
                     "Done", () => {
-                        task.last = Time()
+                        task.last = Today()
                         profile[task.type]++
 
                         Save()
@@ -156,7 +156,7 @@ function Task(task, index) {
                     },
                     true
                 ),
-                Time() !== task.last
+                Today() !== task.last
             )
         ),
         "boxed"
@@ -180,7 +180,7 @@ function EditPage(index) {
                     if (title.value !== "") {
                         if (index === -1) {
                             tasks.push({
-                                last: Time() - DAY,
+                                last: Today() - DAY,
                                 type: type.value,
                                 title: title.value
                             })
@@ -296,16 +296,21 @@ function NotifyPage(message) {
 window.onload = () => {
     Load()
 
-    let penalty = false
-    const now = Time()
+    let missed = 0
+    const today = Today()
+
     for (const task of tasks) {
-        if (now - task.last > DAY) {
-            penalty = true
-            break
+        if (today - task.last > DAY) {
+            missed++
+            task.last = today - DAY
         }
     }
 
-    if (penalty) {
+    if (missed !== 0) {
+        Save()
+    }
+
+    if (missed > 1) {
         NotifyPage("Penalty received")
     } else {
         MainPage()
