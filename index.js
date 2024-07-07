@@ -102,7 +102,7 @@ const rewards = []
 
 function Load() {
     {
-        const data = localStorage["tasks"]
+        const data = localStorage["levelupTasks"]
         if (data) {
             const lines = data.split("\n")
             for (const line of lines) {
@@ -119,7 +119,7 @@ function Load() {
     }
 
     {
-        const data = localStorage["profile"]
+        const data = localStorage["levelupProfile"]
         if (data) {
             const lines = data.split(" ")
             profile.STR = parseInt(lines[0])
@@ -132,7 +132,7 @@ function Load() {
     }
 
     {
-        const data = localStorage["rewards"]
+        const data = localStorage["levelupRewards"]
         if (data) {
             const lines = data.split("\n")
             for (const line of lines) {
@@ -147,16 +147,16 @@ function Load() {
 }
 
 function Save() {
-    localStorage["tasks"] = tasks.map((v) => v.last + " " + v.type + " " + v.title).join("\n")
+    localStorage["levelupTasks"] = tasks.map((v) => v.last + " " + v.type + " " + v.title).join("\n")
 
-    localStorage["profile"] = profile.STR
+    localStorage["levelupProfile"] = profile.STR
         + " " + profile.VIT
         + " " + profile.INT
         + " " + profile.PRC
         + " " + profile.level
         + " " + profile.points
 
-    localStorage["rewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n")
+    localStorage["levelupRewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n")
 }
 
 function Stat(label, value) {
