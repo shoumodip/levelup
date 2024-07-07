@@ -342,7 +342,7 @@ function MainPage() {
             Horizontal(
                 Button("Profile", ProfilePage),
                 Button("Rewards", RewardsPage),
-                Button("Add", () => TaskEditPage(-1))
+                Button("Add Task", () => TaskEditPage(-1))
             ),
             ...tasks.map(Task)
         )
@@ -367,7 +367,7 @@ function RewardsPage() {
         PaddedPage(
             Horizontal(
                 Button("Back", MainPage),
-                Button("Add", () => RewardEditPage(-1)),
+                Button("Add Reward", () => RewardEditPage(-1)),
             ),
             Stat("Points", profile.points),
             ...rewards.map(Reward)
@@ -414,7 +414,7 @@ window.onload = () => {
     }
 
     if (missed > 1) {
-        NotifyPage("Penalty received")
+        NotifyPage("Penalty: Do a hard task")
     } else {
         MainPage()
     }
