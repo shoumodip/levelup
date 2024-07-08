@@ -1,421 +1,305 @@
+"use strict";
 // Time
-const DAY = 8.64e7
-
-function Today() {
-    const time = new Date()
-    time.setHours(0)
-    time.setMinutes(0)
-    time.setSeconds(0)
-    time.setMilliseconds(0)
-    return time.getTime()
+const DAY = 8.64e7;
+function todayTime() {
+    const time = new Date();
+    time.setHours(0);
+    time.setMinutes(0);
+    time.setSeconds(0);
+    time.setMilliseconds(0);
+    return time.getTime();
 }
-
 // HTML
-function Click(element, callback) {
-    element.onclick = callback
-    return element
+function setClick(element, callback) {
+    element.onclick = callback;
+    return element;
 }
-
-function Class(element, ...names) {
-    element.classList.add(...names)
-    return element
+function setClass(element, ...names) {
+    element.classList.add(...names);
+    return element;
 }
-
-function Maybe(element, cond) {
+function domMaybe(element, cond) {
     if (cond) {
-        return element
-    } else {
-        return null
+        return element;
+    }
+    else {
+        return null;
     }
 }
-
-function Input(title, type) {
-    const input = document.createElement("input")
-    input.placeholder = title
-
-    if (type !== null) {
-        input.type = type
+function newInput(title, type) {
+    const input = document.createElement("input");
+    input.placeholder = title;
+    if (type !== undefined) {
+        input.type = type;
     }
-
-    return input
+    return input;
 }
-
-function Button(title, click, compress) {
-    const button = document.createElement("button")
-    button.innerText = title
-    button.onclick = click
-
+function newButton(title, click, compress) {
+    const button = document.createElement("button");
+    button.innerText = title;
+    button.onclick = click;
     if (!compress) {
-        return Class(button, "stretch")
+        return setClass(button, "stretch");
     }
-    return button
+    return button;
 }
-
-function Header(text, level) {
-    const h1 = document.createElement("h" + level)
-    h1.innerText = text
-    return h1
+function newHeader(text, level) {
+    const h1 = document.createElement("h" + level);
+    h1.innerText = text;
+    return h1;
 }
-
-function Select(...options) {
-    const select = document.createElement("select")
-
-    for (const option of options) {
-        const element = document.createElement("option")
-        element.value = option
-        element.innerText = option
-        select.appendChild(element)
+function newSelect(...options) {
+    const select = document.createElement("select");
+    for (let i = 0; i < options.length; i++) {
+        const element = document.createElement("option");
+        element.value = i.toString();
+        element.innerText = options[i];
+        select.appendChild(element);
     }
-
-    return select
+    return select;
 }
-
-function Vertical(...children) {
-    const div = Class(document.createElement("div"), "vertical")
-    div.replaceChildren(...children.filter((e) => e !== null))
-    return div
+function newVertical(...children) {
+    const div = setClass(document.createElement("div"), "vertical");
+    div.replaceChildren(...children.filter((e) => e !== null));
+    return div;
 }
-
-function Horizontal(...children) {
-    const div = Class(document.createElement("div"), "horizontal")
-    div.replaceChildren(...children.filter((e) => e !== null))
-    return div
+function newHorizontal(...children) {
+    const div = setClass(document.createElement("div"), "horizontal");
+    div.replaceChildren(...children.filter((e) => e !== null));
+    return div;
 }
-
-function PaddedPage(...children) {
-    return Class(Vertical(...children), "padding")
+function newPaddedPage(...children) {
+    return setClass(newVertical(...children), "padding");
 }
-
 // Main
-const tasks = []
-
+class Stat {
+    constructor(title, value) {
+        this.title = title;
+        this.value = value;
+    }
+}
+class Task {
+    constructor(title, stat, last) {
+        this.title = title;
+        this.stat = stat;
+        this.last = last;
+    }
+}
+class Reward {
+    constructor(title, cost) {
+        this.title = title;
+        this.cost = cost;
+    }
+}
+const tasks = [];
+const rewards = [];
 const profile = {
-    STR: 0,
-    VIT: 0,
-    INT: 0,
-    PRC: 0,
     level: 1,
-    points: 0
-}
-
-const rewards = []
-
-function Load() {
+    points: 0,
+    stats: [
+        new Stat("Strength", 0),
+        new Stat("Vitality", 0),
+        new Stat("Intelligence", 0),
+        new Stat("Practicality", 0)
+    ]
+};
+function loadData() {
     {
-        const data = localStorage["levelupTasks"]
+        const data = localStorage["levelupTasks"];
         if (data) {
-            const lines = data.split("\n")
+            const lines = data.split("\n");
             for (const line of lines) {
-                const i = line.indexOf(" ")
-                const j = line.indexOf(" ", i + 1)
-
-                tasks.push({
-                    last: parseInt(line.slice(0, i)),
-                    type: line.slice(i + 1, j),
-                    title: line.slice(j + 1)
-                })
+                const i = line.indexOf(" ");
+                const j = line.indexOf(" ", i + 1);
+                tasks.push(new Task(line.slice(j + 1), parseInt(line.slice(i + 1, j)), parseInt(line.slice(0, i))));
             }
         }
     }
-
     {
-        const data = localStorage["levelupProfile"]
+        const data = localStorage["levelupProfile"];
         if (data) {
-            const lines = data.split(" ")
-            profile.STR = parseInt(lines[0])
-            profile.VIT = parseInt(lines[1])
-            profile.INT = parseInt(lines[2])
-            profile.PRC = parseInt(lines[3])
-            profile.level = parseInt(lines[4])
-            profile.points = parseInt(lines[5])
+            const lines = data.split("\n");
+            profile.level = parseInt(lines[0]);
+            profile.points = parseInt(lines[1]);
+            if (lines.length > 2) {
+                profile.stats.length = 0;
+            }
+            for (let i = 2; i < lines.length; i++) {
+                const line = lines[i];
+                const j = line.indexOf(" ");
+                profile.stats.push(new Stat(line.slice(j + 1), parseInt(line.slice(0, j))));
+            }
         }
     }
-
     {
-        const data = localStorage["levelupRewards"]
+        const data = localStorage["levelupRewards"];
         if (data) {
-            const lines = data.split("\n")
+            const lines = data.split("\n");
             for (const line of lines) {
-                const i = line.indexOf(" ")
-                rewards.push({
-                    cost: parseInt(line.slice(0, i)),
-                    title: line.slice(i + 1)
-                })
+                const i = line.indexOf(" ");
+                rewards.push(new Reward(line.slice(i + 1), parseInt(line.slice(0, i))));
             }
         }
     }
 }
-
-function Save() {
-    localStorage["levelupTasks"] = tasks.map((v) => v.last + " " + v.type + " " + v.title).join("\n")
-
-    localStorage["levelupProfile"] = profile.STR
-        + " " + profile.VIT
-        + " " + profile.INT
-        + " " + profile.PRC
-        + " " + profile.level
-        + " " + profile.points
-
-    localStorage["levelupRewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n")
+function saveData() {
+    localStorage["levelupTasks"] = tasks.map((v) => v.last + " " + v.stat + " " + v.title).join("\n");
+    localStorage["levelupProfile"] = profile.level
+        + "\n" + profile.points
+        + "\n" + profile.stats.map((v) => v.value + " " + v.title).join("\n");
+    localStorage["levelupRewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n");
 }
-
-function Stat(label, value) {
-    return Class(
-        Horizontal(
-            Class(Header(label, 1), "stretch"),
-            Header(value, 1),
-        ),
-        "boxed"
-    )
+function drawStat(label, value, index) {
+    return setClick(setClass(newHorizontal(setClass(newHeader(label, 1), "stretch"), newHeader(value, 1)), "boxed"), () => index !== -1 ? drawStatEditPage(index) : null);
 }
-
-function Task(task, index) {
-    return Class(
-        Horizontal(
-            Click(
-                Class(
-                    Vertical(
-                        Header(task.title, 1),
-                        Header(task.type, 2)
-                    ),
-                    "stretch"
-                ),
-                () => TaskEditPage(index)
-            ),
-            Maybe(
-                Button(
-                    "Done", () => {
-                        task.last = Today()
-                        profile.points++
-                        profile[task.type]++
-
-                        Save()
-                        MainPage()
-                    },
-                    true
-                ),
-                Today() !== task.last
-            )
-        ),
-        "boxed"
-    )
+function drawTask(task, index) {
+    return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(task.title, 1), newHeader(profile.stats[task.stat].title, 2)), "stretch"), () => drawTaskEditPage(index)), domMaybe(newButton("Done", () => {
+        task.last = todayTime();
+        profile.points++;
+        profile.stats[task.stat].value++;
+        saveData();
+        drawMainPage();
+    }, true), todayTime() !== task.last)), "boxed");
 }
-
-function Reward(reward, index) {
-    return Class(
-        Horizontal(
-            Click(
-                Class(
-                    Vertical(
-                        Header(reward.title, 1),
-                        Header(reward.cost, 2)
-                    ),
-                    "stretch"
-                ),
-                () => RewardEditPage(index)
-            ),
-            Button(
-                "Buy", () => {
-                    if (profile.points < reward.cost) {
-                        NotifyPage("Not enough points", RewardsPage)
-                        return
-                    }
-
-                    profile.points -= reward.cost
-                    Save()
-
-                    NotifyPage("Reward: " + reward.title + "!", RewardsPage)
-                },
-                true
-            )
-        ),
-        "boxed"
-    )
+function drawReward(reward, index) {
+    return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(reward.title, 1), newHeader(reward.cost.toString(), 2)), "stretch"), () => drawRewardEditPage(index)), newButton("Buy", () => {
+        if (profile.points < reward.cost) {
+            drawNotifyPage("Not enough points", drawRewardsPage);
+            return;
+        }
+        profile.points -= reward.cost;
+        saveData();
+        drawNotifyPage("Reward: " + reward.title + "!", drawRewardsPage);
+    }, true)), "boxed");
 }
-
-function TaskEditPage(index) {
-    const title = Input("Title")
-    const type = Select("STR", "VIT", "INT", "PRC")
-
+function drawStatEditPage(index) {
+    const title = newInput("Title");
     if (index !== -1) {
-        type.value = tasks[index].type
-        title.value = tasks[index].title
+        title.value = profile.stats[index].title;
     }
-
-    document.body.replaceChildren(
-        PaddedPage(
-            Horizontal(
-                Button("Back", MainPage),
-                Button("Done", () => {
-                    if (title.value !== "") {
-                        if (index === -1) {
-                            tasks.push({
-                                last: Today() - DAY,
-                                type: type.value,
-                                title: title.value
-                            })
-                        } else {
-                            tasks[index].type = type.value
-                            tasks[index].title = title.value
-                        }
-
-                        Save()
-                        MainPage()
-                    }
-                }),
-                Maybe(
-                    Button("Remove", () => {
-                        tasks.splice(index, 1)
-
-                        Save()
-                        MainPage()
-                    }),
-                    index !== -1
-                )
-            ),
-            title,
-            type
-        ),
-    )
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawStatsPage), newButton("Done", () => {
+        if (title.value !== "") {
+            if (index === -1) {
+                profile.stats.push(new Stat(title.value, 0));
+            }
+            else {
+                profile.stats[index].title = title.value;
+            }
+            saveData();
+            drawStatsPage();
+        }
+    }), domMaybe(newButton("Remove", () => {
+        profile.stats.splice(index, 1);
+        let j = 0;
+        for (let i = 0; i < tasks.length; i++) {
+            if (tasks[i].stat !== index) {
+                tasks[j++] = tasks[i];
+            }
+        }
+        tasks.length = j;
+        saveData();
+        drawStatsPage();
+    }), index !== -1)), title));
 }
-
-function RewardEditPage(index) {
-    const title = Input("Title")
-    const cost = Input("Cost", "number")
-
+function drawTaskEditPage(index) {
+    const title = newInput("Title");
+    const type = newSelect(...profile.stats.map((v) => v.title));
     if (index !== -1) {
-        cost.value = rewards[index].cost
-        title.value = rewards[index].title
+        type.value = tasks[index].stat.toString();
+        title.value = tasks[index].title;
     }
-
-    document.body.replaceChildren(
-        PaddedPage(
-            Horizontal(
-                Button("Back", RewardsPage),
-                Button("Done", () => {
-                    if (title.value !== "" && cost.value !== "") {
-                        if (index === -1) {
-                            rewards.push({
-                                cost: cost.value,
-                                title: title.value
-                            })
-                        } else {
-                            rewards[index].cost = cost.value
-                            rewards[index].title = title.value
-                        }
-
-                        Save()
-                        RewardsPage()
-                    }
-                }),
-                Maybe(
-                    Button("Remove", () => {
-                        rewards.splice(index, 1)
-
-                        Save()
-                        RewardsPage()
-                    }),
-                    index !== -1
-                )
-            ),
-            title,
-            cost
-        ),
-    )
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawMainPage), newButton("Done", () => {
+        if (title.value !== "") {
+            if (index === -1) {
+                tasks.push(new Task(title.value, parseInt(type.value), todayTime() - DAY));
+            }
+            else {
+                tasks[index].stat = parseInt(type.value);
+                tasks[index].title = title.value;
+            }
+            saveData();
+            drawMainPage();
+        }
+    }), domMaybe(newButton("Remove", () => {
+        tasks.splice(index, 1);
+        saveData();
+        drawMainPage();
+    }), index !== -1)), title, type));
 }
-
-function MainPage() {
-    if (profile.STR >= 10 && profile.VIT >= 10 && profile.INT >= 10 && profile.PRC >= 10) {
-        profile.level++
-        profile.STR -= 10
-        profile.VIT -= 10
-        profile.INT -= 10
-        profile.PRC -= 10
-
-        Save()
-        NotifyPage("Leveled up!")
-        return
+function drawRewardEditPage(index) {
+    const title = newInput("Title");
+    const cost = newInput("Cost", "number");
+    if (index !== -1) {
+        cost.value = rewards[index].cost.toString();
+        title.value = rewards[index].title;
     }
-
-    document.body.replaceChildren(
-        PaddedPage(
-            Horizontal(
-                Button("Profile", ProfilePage),
-                Button("Rewards", RewardsPage),
-                Button("Add Task", () => TaskEditPage(-1))
-            ),
-            ...tasks.map(Task)
-        )
-    )
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawRewardsPage), newButton("Done", () => {
+        if (title.value !== "" && cost.value !== "") {
+            if (index === -1) {
+                rewards.push(new Reward(title.value, parseInt(cost.value)));
+            }
+            else {
+                rewards[index].cost = parseInt(cost.value);
+                rewards[index].title = title.value;
+            }
+            saveData();
+            drawRewardsPage();
+        }
+    }), domMaybe(newButton("Remove", () => {
+        rewards.splice(index, 1);
+        saveData();
+        drawRewardsPage();
+    }), index !== -1)), title, cost));
 }
-
-function ProfilePage() {
-    document.body.replaceChildren(
-        PaddedPage(
-            Button("Back", MainPage),
-            Stat("Level", profile.level),
-            Stat("STR", profile.STR + "/10"),
-            Stat("VIT", profile.VIT + "/10"),
-            Stat("INT", profile.INT + "/10"),
-            Stat("PRC", profile.PRC + "/10"),
-        )
-    )
-}
-
-function RewardsPage() {
-    document.body.replaceChildren(
-        PaddedPage(
-            Horizontal(
-                Button("Back", MainPage),
-                Button("Add Reward", () => RewardEditPage(-1)),
-            ),
-            Stat("Points", profile.points),
-            ...rewards.map(Reward)
-        )
-    )
-}
-
-function NotifyPage(message, back) {
-    if (back === null) {
-        back = MainPage
+function drawMainPage() {
+    let levelup = true;
+    for (const stat of profile.stats) {
+        if (stat.value < 10) {
+            levelup = false;
+            break;
+        }
     }
-
-    document.body.classList.add("center")
-    document.body.replaceChildren(
-        Class(
-            Vertical(
-                Header(message, 1),
-                Button("OK", () => {
-                    document.body.classList.remove("center")
-                    back()
-                }),
-            ),
-            "boxed",
-            "center"
-        )
-    )
+    if (levelup) {
+        profile.level++;
+        for (const stat of profile.stats) {
+            stat.value -= 10;
+        }
+        saveData();
+        drawNotifyPage("Leveled up!");
+        return;
+    }
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Stats", drawStatsPage), newButton("Rewards", drawRewardsPage), newButton("Add Task", () => drawTaskEditPage(-1))), ...tasks.map(drawTask)));
 }
-
+function drawStatsPage() {
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawMainPage), newButton("Add Stat", () => drawStatEditPage(-1))), drawStat("Level", profile.level.toString(), -1), ...profile.stats.map((v, i) => drawStat(v.title, v.value + "/10", i))));
+}
+function drawRewardsPage() {
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawMainPage), newButton("Add Reward", () => drawRewardEditPage(-1))), drawStat("Points", profile.points.toString(), -1), ...rewards.map(drawReward)));
+}
+function drawNotifyPage(message, back = drawMainPage) {
+    document.body.classList.add("center");
+    document.body.replaceChildren(setClass(newVertical(newHeader(message, 1), newButton("OK", () => {
+        document.body.classList.remove("center");
+        back();
+    })), "boxed", "center"));
+}
 window.onload = () => {
-    Load()
-
-    let missed = 0
-    const today = Today()
-
+    loadData();
+    let missed = 0;
+    const today = todayTime();
     for (const task of tasks) {
         if (today - task.last > DAY) {
-            missed++
-            task.last = today - DAY
+            missed++;
+            task.last = today - DAY;
         }
     }
-
     if (missed !== 0) {
-        Save()
+        saveData();
     }
-
     if (missed > 1) {
-        NotifyPage("Penalty: Do a hard task")
-    } else {
-        MainPage()
+        drawNotifyPage("Penalty: No phone for 1 day");
     }
-}
+    else {
+        drawMainPage();
+    }
+};
