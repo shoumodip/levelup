@@ -203,7 +203,7 @@ function drawStatEditPage(index) {
 }
 function drawTaskEditPage(index) {
     const title = newInput("Title");
-    const type = newSelect(...profile.stats.map((v) => v.title));
+    const type = newSelect(...profile.stats.map((v) => v.title.toUpperCase()));
     if (index !== -1) {
         type.value = tasks[index].stat.toString();
         title.value = tasks[index].title;
@@ -284,22 +284,27 @@ function drawNotifyPage(message, back = drawMainPage) {
     })), "boxed", "center"));
 }
 window.onload = () => {
-    loadData();
-    let missed = 0;
-    const today = todayTime();
-    for (const task of tasks) {
-        if (today - task.last > DAY) {
-            missed++;
-            task.last = today - DAY;
+    const font = new FontFace("No Continue", "url('fonts/NoContinue.ttf')");
+    document.fonts.add(font);
+    font.load();
+    document.fonts.ready.then(() => {
+        loadData();
+        let missed = 0;
+        const today = todayTime();
+        for (const task of tasks) {
+            if (today - task.last > DAY) {
+                missed++;
+                task.last = today - DAY;
+            }
         }
-    }
-    if (missed !== 0) {
-        saveData();
-    }
-    if (missed > 1) {
-        drawNotifyPage("Penalty: No phone for 1 day");
-    }
-    else {
-        drawMainPage();
-    }
+        if (missed !== 0) {
+            saveData();
+        }
+        if (missed > 1) {
+            drawNotifyPage("Penalty: No phone for 1 day");
+        }
+        else {
+            drawMainPage();
+        }
+    });
 };

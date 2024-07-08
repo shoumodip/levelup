@@ -323,7 +323,7 @@ function drawStatEditPage(index: number) {
 
 function drawTaskEditPage(index: number) {
     const title = newInput("Title")
-    const type = newSelect(...profile.stats.map((v) => v.title))
+    const type = newSelect(...profile.stats.map((v) => v.title.toUpperCase()))
 
     if (index !== -1) {
         type.value = tasks[index].stat.toString()
@@ -488,25 +488,31 @@ function drawNotifyPage(message: string, back: (() => void) = drawMainPage) {
 }
 
 window.onload = () => {
-    loadData()
+    const font = new FontFace("No Continue", "url('fonts/NoContinue.ttf')")
+    document.fonts.add(font)
 
-    let missed = 0
-    const today = todayTime()
+    font.load()
+    document.fonts.ready.then(() => {
+        loadData()
 
-    for (const task of tasks) {
-        if (today - task.last > DAY) {
-            missed++
-            task.last = today - DAY
+        let missed = 0
+        const today = todayTime()
+
+        for (const task of tasks) {
+            if (today - task.last > DAY) {
+                missed++
+                task.last = today - DAY
+            }
         }
-    }
 
-    if (missed !== 0) {
-        saveData()
-    }
+        if (missed !== 0) {
+            saveData()
+        }
 
-    if (missed > 1) {
-        drawNotifyPage("Penalty: No phone for 1 day")
-    } else {
-        drawMainPage()
-    }
+        if (missed > 1) {
+            drawNotifyPage("Penalty: No phone for 1 day")
+        } else {
+            drawMainPage()
+        }
+    })
 }

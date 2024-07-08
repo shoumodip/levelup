@@ -1,8 +1,3 @@
-@font-face {
-    src: url("fonts/NoContinue.ttf");
-    font-family: "No Continue";
-}
-
 * {
     font-size: 1.8rem;
     font-family: No Continue;
