@@ -299,11 +299,7 @@ function drawStatEditPage(index: number) {
                     if (title.value !== "") {
                         if (index === -1) {
                             stats.push(new Stat(title.value, 0))
-
-                            if (!tutorial.stats) {
-                                tutorial.stats = true
-                                saveData()
-                            }
+                            tutorial.stats = true
                         } else {
                             stats[index].title = title.value
                         }
@@ -361,11 +357,7 @@ function drawTaskEditPage(index: number) {
                                 parseInt(type.value),
                                 todayTime() - DAY
                             ))
-
-                            if (!tutorial.tasks) {
-                                tutorial.tasks = true
-                                saveData()
-                            }
+                            tutorial.tasks = true
                         } else {
                             tasks[index].stat = parseInt(type.value)
                             tasks[index].title = title.value
@@ -412,10 +404,7 @@ function drawRewardEditPage(index: number) {
                                 parseInt(cost.value)
                             ))
 
-                            if (!tutorial.rewards) {
-                                tutorial.rewards = true
-                                saveData()
-                            }
+                            tutorial.rewards = true
                         } else {
                             rewards[index].cost = parseInt(cost.value)
                             rewards[index].title = title.value
@@ -518,21 +507,16 @@ function drawStatsPage() {
                         "Click on the 'Add Stat' button to add a stat to your profile, or click on 'Create sample stats' to add some sample stats",
                     ],
                     "stats", drawStatsPage,
-                    setClass(
-                        newVertical(
-                            newButton("Create sample stats", () => {
-                                stats.push(new Stat("Strength", 0))
-                                stats.push(new Stat("Vitality", 0))
-                                stats.push(new Stat("Intelligence", 0))
-                                stats.push(new Stat("Practicality", 0))
+                    newButton("Add sample stats", () => {
+                        stats.push(new Stat("Strength", 0))
+                        stats.push(new Stat("Vitality", 0))
+                        stats.push(new Stat("Intelligence", 0))
+                        stats.push(new Stat("Practicality", 0))
 
-                                tutorial.stats = true
-                                saveData()
-                                drawStatsPage()
-                            }, true)
-                        ),
-                        "center"
-                    )
+                        tutorial.stats = true
+                        saveData()
+                        drawStatsPage()
+                    }, true)
                 )
             ])
         )

@@ -188,10 +188,7 @@ function drawStatEditPage(index) {
         if (title.value !== "") {
             if (index === -1) {
                 stats.push(new Stat(title.value, 0));
-                if (!tutorial.stats) {
-                    tutorial.stats = true;
-                    saveData();
-                }
+                tutorial.stats = true;
             }
             else {
                 stats[index].title = title.value;
@@ -227,10 +224,7 @@ function drawTaskEditPage(index) {
         if (title.value !== "") {
             if (index === -1) {
                 tasks.push(new Task(title.value, parseInt(type.value), todayTime() - DAY));
-                if (!tutorial.tasks) {
-                    tutorial.tasks = true;
-                    saveData();
-                }
+                tutorial.tasks = true;
             }
             else {
                 tasks[index].stat = parseInt(type.value);
@@ -256,10 +250,7 @@ function drawRewardEditPage(index) {
         if (title.value !== "" && cost.value !== "") {
             if (index === -1) {
                 rewards.push(new Reward(title.value, parseInt(cost.value)));
-                if (!tutorial.rewards) {
-                    tutorial.rewards = true;
-                    saveData();
-                }
+                tutorial.rewards = true;
             }
             else {
                 rewards[index].cost = parseInt(cost.value);
@@ -314,7 +305,7 @@ function drawStatsPage() {
             "Each daily task is assigned a specific stat, which adds a stat point upon completion",
             "When all stats reach 10 or more, you level up",
             "Click on the 'Add Stat' button to add a stat to your profile, or click on 'Create sample stats' to add some sample stats",
-        ], "stats", drawStatsPage, setClass(newVertical(newButton("Create sample stats", () => {
+        ], "stats", drawStatsPage, newButton("Add sample stats", () => {
             stats.push(new Stat("Strength", 0));
             stats.push(new Stat("Vitality", 0));
             stats.push(new Stat("Intelligence", 0));
@@ -322,7 +313,7 @@ function drawStatsPage() {
             tutorial.stats = true;
             saveData();
             drawStatsPage();
-        }, true)), "center"))
+        }, true))
     ])));
 }
 function drawRewardsPage() {
