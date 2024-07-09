@@ -98,7 +98,11 @@ const profile = {
     level: 1,
     points: 0
 };
-const tutorial = [false, false, false];
+const tutorial = {
+    stats: false,
+    tasks: false,
+    rewards: false
+};
 function loadData() {
     {
         const data = localStorage["levelupTasks"];
@@ -138,9 +142,9 @@ function loadData() {
         const data = localStorage["levelupTutorial"];
         if (data) {
             const lines = data.split("\n");
-            tutorial[0] = lines[0] === "true";
-            tutorial[1] = lines[1] === "true";
-            tutorial[2] = lines[2] === "true";
+            tutorial.stats = lines[0] === "true";
+            tutorial.tasks = lines[1] === "true";
+            tutorial.rewards = lines[2] === "true";
         }
     }
 }
@@ -150,7 +154,7 @@ function saveData() {
         + "\n" + profile.points
         + "\n" + stats.map((v) => v.value + " " + v.title).join("\n");
     localStorage["levelupRewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n");
-    localStorage["levelupTutorial"] = tutorial.join("\n");
+    localStorage["levelupTutorial"] = tutorial.stats + "\n" + tutorial.tasks + "\n" + tutorial.rewards;
 }
 function drawStat(label, value, index) {
     return setClick(setClass(newHorizontal(setClass(newHeader(label, 1), "stretch"), newHeader(value, 1)), "boxed"), () => index !== -1 ? drawStatEditPage(index) : null);
@@ -184,8 +188,8 @@ function drawStatEditPage(index) {
         if (title.value !== "") {
             if (index === -1) {
                 stats.push(new Stat(title.value, 0));
-                if (!tutorial[0]) {
-                    tutorial[0] = true;
+                if (!tutorial.stats) {
+                    tutorial.stats = true;
                     saveData();
                 }
             }
@@ -223,8 +227,8 @@ function drawTaskEditPage(index) {
         if (title.value !== "") {
             if (index === -1) {
                 tasks.push(new Task(title.value, parseInt(type.value), todayTime() - DAY));
-                if (!tutorial[1]) {
-                    tutorial[1] = true;
+                if (!tutorial.tasks) {
+                    tutorial.tasks = true;
                     saveData();
                 }
             }
@@ -252,8 +256,8 @@ function drawRewardEditPage(index) {
         if (title.value !== "" && cost.value !== "") {
             if (index === -1) {
                 rewards.push(new Reward(title.value, parseInt(cost.value)));
-                if (!tutorial[2]) {
-                    tutorial[2] = true;
+                if (!tutorial.rewards) {
+                    tutorial.rewards = true;
                     saveData();
                 }
             }
@@ -294,44 +298,41 @@ function drawMainPage() {
         drawNotifyPage("Leveled up!");
         return;
     }
-    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Stats", drawStatsPage), newButton("Rewards", drawRewardsPage), newButton("Add Task", () => drawTaskEditPage(-1))), ...(tutorial[1] ? tasks.map(drawTask) : [
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Stats", drawStatsPage), newButton("Rewards", drawRewardsPage), newButton("Add Task", () => drawTaskEditPage(-1))), ...(tutorial.tasks ? tasks.map(drawTask) : [
         drawInfo([
             "Tasks are daily quests you have to complete in order to gain points",
             "Each task has an associated stat which gains 1 point on completion",
             "Failure to complete more than 1 task per day will result in a penalty",
             "Click on the 'Add Task' button to add a task to your daily queue"
-        ], 1, drawMainPage)
+        ], "tasks", drawMainPage)
     ])));
 }
 function drawStatsPage() {
-    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawMainPage), newButton("Add Stat", () => drawStatEditPage(-1))), drawStat("Level", profile.level.toString(), -1), ...(tutorial[0] ? stats.map((v, i) => drawStat(v.title, v.value + "/10", i)) : [
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawMainPage), newButton("Add Stat", () => drawStatEditPage(-1))), drawStat("Level", profile.level.toString(), -1), ...(tutorial.stats ? stats.map((v, i) => drawStat(v.title, v.value + "/10", i)) : [
         drawInfo([
             "Stats are fields of interest you can improve in",
             "Each daily task is assigned a specific stat, which adds a stat point upon completion",
             "When all stats reach 10 or more, you level up",
             "Click on the 'Add Stat' button to add a stat to your profile, or click on 'Create sample stats' to add some sample stats",
-        ], 0, drawStatsPage, setClass(newVertical(newButton("Create sample stats", () => {
+        ], "stats", drawStatsPage, setClass(newVertical(newButton("Create sample stats", () => {
             stats.push(new Stat("Strength", 0));
             stats.push(new Stat("Vitality", 0));
             stats.push(new Stat("Intelligence", 0));
             stats.push(new Stat("Practicality", 0));
-            if (!tutorial[0]) {
-                tutorial[0] = true;
-                saveData();
-            }
+            tutorial.stats = true;
             saveData();
             drawStatsPage();
         }, true)), "center"))
     ])));
 }
 function drawRewardsPage() {
-    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawMainPage), newButton("Add Reward", () => drawRewardEditPage(-1))), drawStat("Points", profile.points.toString(), -1), ...(tutorial[2] ? rewards.map(drawReward) : [
+    document.body.replaceChildren(newPaddedPage(newHorizontal(newButton("Back", drawMainPage), newButton("Add Reward", () => drawRewardEditPage(-1))), drawStat("Points", profile.points.toString(), -1), ...(tutorial.rewards ? rewards.map(drawReward) : [
         drawInfo([
             "Completion of tasks grants reward points, which can be used to buy, well, rewards",
             "Rewards are any pleasurable activity you wish to partake in, like social media, fast food, etc.",
             "Note that you personally need to maintain the discipline to not do those activies unless bought",
             "Click on the 'Add Reward' button to add a reward, and set a point price accordingly"
-        ], 2, drawRewardsPage)
+        ], "rewards", drawRewardsPage)
     ])));
 }
 function drawNotifyPage(message, back = drawMainPage) {

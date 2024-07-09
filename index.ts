@@ -128,7 +128,11 @@ const profile = {
     points: 0
 }
 
-const tutorial = [false, false, false]
+const tutorial = {
+    stats: false,
+    tasks: false,
+    rewards: false
+}
 
 function loadData() {
     {
@@ -184,9 +188,9 @@ function loadData() {
         const data = localStorage["levelupTutorial"] as (string | null)
         if (data) {
             const lines = data.split("\n")
-            tutorial[0] = lines[0] === "true"
-            tutorial[1] = lines[1] === "true"
-            tutorial[2] = lines[2] === "true"
+            tutorial.stats = lines[0] === "true"
+            tutorial.tasks = lines[1] === "true"
+            tutorial.rewards = lines[2] === "true"
         }
     }
 }
@@ -200,7 +204,7 @@ function saveData() {
 
     localStorage["levelupRewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n")
 
-    localStorage["levelupTutorial"] = tutorial.join("\n")
+    localStorage["levelupTutorial"] = tutorial.stats + "\n" + tutorial.tasks + "\n" + tutorial.rewards
 }
 
 function drawStat(label: string, value: string, index: number) {
@@ -296,8 +300,8 @@ function drawStatEditPage(index: number) {
                         if (index === -1) {
                             stats.push(new Stat(title.value, 0))
 
-                            if (!tutorial[0]) {
-                                tutorial[0] = true
+                            if (!tutorial.stats) {
+                                tutorial.stats = true
                                 saveData()
                             }
                         } else {
@@ -358,8 +362,8 @@ function drawTaskEditPage(index: number) {
                                 todayTime() - DAY
                             ))
 
-                            if (!tutorial[1]) {
-                                tutorial[1] = true
+                            if (!tutorial.tasks) {
+                                tutorial.tasks = true
                                 saveData()
                             }
                         } else {
@@ -408,8 +412,8 @@ function drawRewardEditPage(index: number) {
                                 parseInt(cost.value)
                             ))
 
-                            if (!tutorial[2]) {
-                                tutorial[2] = true
+                            if (!tutorial.rewards) {
+                                tutorial.rewards = true
                                 saveData()
                             }
                         } else {
@@ -437,7 +441,7 @@ function drawRewardEditPage(index: number) {
     )
 }
 
-function drawInfo(body: string[], type: number, main: () => void, extra?: HTMLElement): HTMLDivElement {
+function drawInfo(body: string[], type: "stats" | "tasks" | "rewards", main: () => void, extra?: HTMLElement): HTMLDivElement {
     return setClass(
         newVertical(
             newHeader("Info", 1),
@@ -485,13 +489,13 @@ function drawMainPage() {
                 newButton("Rewards", drawRewardsPage),
                 newButton("Add Task", () => drawTaskEditPage(-1))
             ),
-            ...(tutorial[1] ? tasks.map(drawTask) : [
+            ...(tutorial.tasks ? tasks.map(drawTask) : [
                 drawInfo([
                     "Tasks are daily quests you have to complete in order to gain points",
                     "Each task has an associated stat which gains 1 point on completion",
                     "Failure to complete more than 1 task per day will result in a penalty",
                     "Click on the 'Add Task' button to add a task to your daily queue"
-                ], 1, drawMainPage)
+                ], "tasks", drawMainPage)
             ])
         )
     )
@@ -505,7 +509,7 @@ function drawStatsPage() {
                 newButton("Add Stat", () => drawStatEditPage(-1))
             ),
             drawStat("Level", profile.level.toString(), -1),
-            ...(tutorial[0] ? stats.map((v, i) => drawStat(v.title, v.value + "/10", i)) : [
+            ...(tutorial.stats ? stats.map((v, i) => drawStat(v.title, v.value + "/10", i)) : [
                 drawInfo(
                     [
                         "Stats are fields of interest you can improve in",
@@ -513,7 +517,7 @@ function drawStatsPage() {
                         "When all stats reach 10 or more, you level up",
                         "Click on the 'Add Stat' button to add a stat to your profile, or click on 'Create sample stats' to add some sample stats",
                     ],
-                    0, drawStatsPage,
+                    "stats", drawStatsPage,
                     setClass(
                         newVertical(
                             newButton("Create sample stats", () => {
@@ -522,11 +526,7 @@ function drawStatsPage() {
                                 stats.push(new Stat("Intelligence", 0))
                                 stats.push(new Stat("Practicality", 0))
 
-                                if (!tutorial[0]) {
-                                    tutorial[0] = true
-                                    saveData()
-                                }
-
+                                tutorial.stats = true
                                 saveData()
                                 drawStatsPage()
                             }, true)
@@ -548,13 +548,13 @@ function drawRewardsPage() {
                 newButton("Add Reward", () => drawRewardEditPage(-1)),
             ),
             drawStat("Points", profile.points.toString(), -1),
-            ...(tutorial[2] ? rewards.map(drawReward) : [
+            ...(tutorial.rewards ? rewards.map(drawReward) : [
                 drawInfo([
                     "Completion of tasks grants reward points, which can be used to buy, well, rewards",
                     "Rewards are any pleasurable activity you wish to partake in, like social media, fast food, etc.",
                     "Note that you personally need to maintain the discipline to not do those activies unless bought",
                     "Click on the 'Add Reward' button to add a reward, and set a point price accordingly"
-                ], 2, drawRewardsPage)
+                ], "rewards", drawRewardsPage)
             ])
         )
     )
