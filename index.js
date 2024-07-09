@@ -304,8 +304,9 @@ function drawStatsPage() {
             "Stats are fields of interest you can improve in",
             "Each daily task is assigned a specific stat, which adds a stat point upon completion",
             "When all stats reach 10 or more, you level up",
-            "Click on the 'Add Stat' button to add a stat to your profile, or click on 'Create sample stats' to add some sample stats",
-        ], "stats", drawStatsPage, newButton("Add sample stats", () => {
+            "Click on the 'Add Stat' button to add a stat to your profile" +
+                (stats.length == 0 ? ", or click on 'Add sample stats' to add some sample stats" : "")
+        ], "stats", drawStatsPage, domMaybe(newButton("Add sample stats", () => {
             stats.push(new Stat("Strength", 0));
             stats.push(new Stat("Vitality", 0));
             stats.push(new Stat("Intelligence", 0));
@@ -313,7 +314,7 @@ function drawStatsPage() {
             tutorial.stats = true;
             saveData();
             drawStatsPage();
-        }, true))
+        }, true), stats.length === 0))
     ])));
 }
 function drawRewardsPage() {
