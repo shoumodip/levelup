@@ -57,6 +57,11 @@ body, .vertical {
     display: flex;
 }
 
+.sidePadding {
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+}
+
 select {
 	appearance: none;
 }

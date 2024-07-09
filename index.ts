@@ -21,11 +21,11 @@ function setClass<T extends HTMLElement>(element: T, ...names: string[]): T {
     return element
 }
 
-function domMaybe<T extends HTMLElement>(element: T, cond: boolean): (T | null) {
+function domMaybe<T extends HTMLElement>(element: T, cond: boolean): (T | undefined) {
     if (cond) {
         return element
     } else {
-        return null
+        return undefined
     }
 }
 
@@ -70,19 +70,19 @@ function newSelect(...options: string[]): HTMLSelectElement {
     return select
 }
 
-function newVertical(...children: (HTMLElement | null)[]): HTMLDivElement {
+function newVertical(...children: (HTMLElement | undefined)[]): HTMLDivElement {
     const div = setClass(document.createElement("div"), "vertical")
-    div.replaceChildren(...children.filter((e) => e !== null))
+    div.replaceChildren(...children.filter((e) => e !== undefined))
     return div
 }
 
-function newHorizontal(...children: (HTMLElement | null)[]): HTMLDivElement {
+function newHorizontal(...children: (HTMLElement | undefined)[]): HTMLDivElement {
     const div = setClass(document.createElement("div"), "horizontal")
-    div.replaceChildren(...children.filter((e) => e !== null))
+    div.replaceChildren(...children.filter((e) => e !== undefined))
     return div
 }
 
-function newPaddedPage(...children: (HTMLElement | null)[]): HTMLDivElement {
+function newPaddedPage(...children: (HTMLElement | undefined)[]): HTMLDivElement {
     return setClass(newVertical(...children), "padding")
 }
 
@@ -119,19 +119,16 @@ class Reward {
     }
 }
 
+const stats: Stat[] = []
 const tasks: Task[] = []
 const rewards: Reward[] = []
 
 const profile = {
     level: 1,
-    points: 0,
-    stats: [
-        new Stat("Strength", 0),
-        new Stat("Vitality", 0),
-        new Stat("Intelligence", 0),
-        new Stat("Practicality", 0)
-    ]
+    points: 0
 }
+
+const tutorial = [false, false, false]
 
 function loadData() {
     {
@@ -158,14 +155,10 @@ function loadData() {
             profile.level = parseInt(lines[0])
             profile.points = parseInt(lines[1])
 
-            if (lines.length > 2) {
-                profile.stats.length = 0
-            }
-
             for (let i = 2; i < lines.length; i++) {
                 const line = lines[i]
                 const j = line.indexOf(" ")
-                profile.stats.push(new Stat(
+                stats.push(new Stat(
                     line.slice(j + 1),
                     parseInt(line.slice(0, j))
                 ))
@@ -186,6 +179,16 @@ function loadData() {
             }
         }
     }
+
+    {
+        const data = localStorage["levelupTutorial"] as (string | null)
+        if (data) {
+            const lines = data.split("\n")
+            tutorial[0] = lines[0] === "true"
+            tutorial[1] = lines[1] === "true"
+            tutorial[2] = lines[2] === "true"
+        }
+    }
 }
 
 function saveData() {
@@ -193,9 +196,11 @@ function saveData() {
 
     localStorage["levelupProfile"] = profile.level
         + "\n" + profile.points
-        + "\n" + profile.stats.map((v) => v.value + " " + v.title).join("\n")
+        + "\n" + stats.map((v) => v.value + " " + v.title).join("\n")
 
     localStorage["levelupRewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n")
+
+    localStorage["levelupTutorial"] = tutorial.join("\n")
 }
 
 function drawStat(label: string, value: string, index: number) {
@@ -218,7 +223,7 @@ function drawTask(task: Task, index: number) {
                 setClass(
                     newVertical(
                         newHeader(task.title, 1),
-                        newHeader(profile.stats[task.stat].title, 2)
+                        newHeader(stats[task.stat].title, 2)
                     ),
                     "stretch"
                 ),
@@ -229,7 +234,7 @@ function drawTask(task: Task, index: number) {
                     "Done", () => {
                         task.last = todayTime()
                         profile.points++
-                        profile.stats[task.stat].value++
+                        stats[task.stat].value++
 
                         saveData()
                         drawMainPage()
@@ -279,7 +284,7 @@ function drawStatEditPage(index: number) {
     const title = newInput("Title")
 
     if (index !== -1) {
-        title.value = profile.stats[index].title
+        title.value = stats[index].title
     }
 
     document.body.replaceChildren(
@@ -289,9 +294,14 @@ function drawStatEditPage(index: number) {
                 newButton("Done", () => {
                     if (title.value !== "") {
                         if (index === -1) {
-                            profile.stats.push(new Stat(title.value, 0))
+                            stats.push(new Stat(title.value, 0))
+
+                            if (!tutorial[0]) {
+                                tutorial[0] = true
+                                saveData()
+                            }
                         } else {
-                            profile.stats[index].title = title.value
+                            stats[index].title = title.value
                         }
 
                         saveData()
@@ -300,7 +310,7 @@ function drawStatEditPage(index: number) {
                 }),
                 domMaybe(
                     newButton("Remove", () => {
-                        profile.stats.splice(index, 1)
+                        stats.splice(index, 1)
 
                         let j = 0
                         for (let i = 0; i < tasks.length; i++) {
@@ -322,8 +332,13 @@ function drawStatEditPage(index: number) {
 }
 
 function drawTaskEditPage(index: number) {
+    if (stats.length === 0) {
+        drawNotifyPage("You have no stats that can be assigned to tasks. Create a stat first", drawStatsPage)
+        return
+    }
+
     const title = newInput("Title")
-    const type = newSelect(...profile.stats.map((v) => v.title.toUpperCase()))
+    const type = newSelect(...stats.map((v) => v.title.toUpperCase()))
 
     if (index !== -1) {
         type.value = tasks[index].stat.toString()
@@ -342,6 +357,11 @@ function drawTaskEditPage(index: number) {
                                 parseInt(type.value),
                                 todayTime() - DAY
                             ))
+
+                            if (!tutorial[1]) {
+                                tutorial[1] = true
+                                saveData()
+                            }
                         } else {
                             tasks[index].stat = parseInt(type.value)
                             tasks[index].title = title.value
@@ -387,6 +407,11 @@ function drawRewardEditPage(index: number) {
                                 title.value,
                                 parseInt(cost.value)
                             ))
+
+                            if (!tutorial[2]) {
+                                tutorial[2] = true
+                                saveData()
+                            }
                         } else {
                             rewards[index].cost = parseInt(cost.value)
                             rewards[index].title = title.value
@@ -412,9 +437,30 @@ function drawRewardEditPage(index: number) {
     )
 }
 
+function drawInfo(body: string[], type: number, main: () => void, extra?: HTMLElement): HTMLDivElement {
+    return setClass(
+        newVertical(
+            newHeader("Info", 1),
+            ...body.map((i) => newHeader(i, 2)),
+            setClass(
+                newHorizontal(
+                    extra,
+                    newButton("Dismiss", () => {
+                        tutorial[type] = true
+                        saveData()
+                        main()
+                    }, true)
+                ),
+                "center"
+            )
+        ),
+        "boxed"
+    )
+}
+
 function drawMainPage() {
-    let levelup = true
-    for (const stat of profile.stats) {
+    let levelup = stats.length !== 0
+    for (const stat of stats) {
         if (stat.value < 10) {
             levelup = false
             break
@@ -423,7 +469,7 @@ function drawMainPage() {
 
     if (levelup) {
         profile.level++
-        for (const stat of profile.stats) {
+        for (const stat of stats) {
             stat.value -= 10
         }
 
@@ -439,7 +485,14 @@ function drawMainPage() {
                 newButton("Rewards", drawRewardsPage),
                 newButton("Add Task", () => drawTaskEditPage(-1))
             ),
-            ...tasks.map(drawTask)
+            ...(tutorial[1] ? tasks.map(drawTask) : [
+                drawInfo([
+                    "Tasks are daily quests you have to complete in order to gain points",
+                    "Each task has an associated stat which gains 1 point on completion",
+                    "Failure to complete more than 1 task per day will result in a penalty",
+                    "Click on the 'Add Task' button to add a task to your daily queue"
+                ], 1, drawMainPage)
+            ])
         )
     )
 }
@@ -452,10 +505,40 @@ function drawStatsPage() {
                 newButton("Add Stat", () => drawStatEditPage(-1))
             ),
             drawStat("Level", profile.level.toString(), -1),
-            ...profile.stats.map((v, i) => drawStat(v.title, v.value + "/10", i))
+            ...(tutorial[0] ? stats.map((v, i) => drawStat(v.title, v.value + "/10", i)) : [
+                drawInfo(
+                    [
+                        "Stats are fields of interest you can improve in",
+                        "Each daily task is assigned a specific stat, which adds a stat point upon completion",
+                        "When all stats reach 10 or more, you level up",
+                        "Click on the 'Add Stat' button to add a stat to your profile, or click on 'Create sample stats' to add some sample stats",
+                    ],
+                    0, drawStatsPage,
+                    setClass(
+                        newVertical(
+                            newButton("Create sample stats", () => {
+                                stats.push(new Stat("Strength", 0))
+                                stats.push(new Stat("Vitality", 0))
+                                stats.push(new Stat("Intelligence", 0))
+                                stats.push(new Stat("Practicality", 0))
+
+                                if (!tutorial[0]) {
+                                    tutorial[0] = true
+                                    saveData()
+                                }
+
+                                saveData()
+                                drawStatsPage()
+                            }, true)
+                        ),
+                        "center"
+                    )
+                )
+            ])
         )
     )
 }
+
 
 function drawRewardsPage() {
     document.body.replaceChildren(
@@ -465,19 +548,28 @@ function drawRewardsPage() {
                 newButton("Add Reward", () => drawRewardEditPage(-1)),
             ),
             drawStat("Points", profile.points.toString(), -1),
-            ...rewards.map(drawReward)
+            ...(tutorial[2] ? rewards.map(drawReward) : [
+                drawInfo([
+                    "Completion of tasks grants reward points, which can be used to buy, well, rewards",
+                    "Rewards are any pleasurable activity you wish to partake in, like social media, fast food, etc.",
+                    "Note that you personally need to maintain the discipline to not do those activies unless bought",
+                    "Click on the 'Add Reward' button to add a reward, and set a point price accordingly"
+                ], 2, drawRewardsPage)
+            ])
         )
     )
 }
 
 function drawNotifyPage(message: string, back: (() => void) = drawMainPage) {
     document.body.classList.add("center")
+    document.body.classList.add("sidePadding")
     document.body.replaceChildren(
         setClass(
             newVertical(
                 newHeader(message, 1),
                 newButton("OK", () => {
                     document.body.classList.remove("center")
+                    document.body.classList.remove("sidePadding")
                     back()
                 }),
             ),
