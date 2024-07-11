@@ -170,8 +170,8 @@ function drawTask(task, index) {
 }
 function drawReward(reward, index) {
     return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(reward.title, 1), newHeader(reward.cost.toString(), 2)), "stretch"), () => drawRewardEditPage(index)), newButton("Buy", () => {
-        if (profile.points < 0) {
-            drawNotifyPage("Cannot buy reward with already present debt", drawRewardsPage);
+        if (profile.points < reward.cost) {
+            drawNotifyPage("Not enough points", drawRewardsPage);
             return;
         }
         profile.points -= reward.cost;
