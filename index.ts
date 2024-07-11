@@ -267,8 +267,8 @@ function drawReward(reward: Reward, index: number) {
             ),
             newButton(
                 "Buy", () => {
-                    if (profile.points < reward.cost) {
-                        drawNotifyPage("Not enough points", drawRewardsPage)
+                    if (profile.points < 0) {
+                        drawNotifyPage("Cannot buy reward with already present debt", drawRewardsPage)
                         return
                     }
 
