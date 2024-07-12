@@ -131,7 +131,8 @@ const profile = {
 const tutorial = {
     stats: false,
     tasks: false,
-    rewards: false
+    rewards: false,
+    grinding: false,
 }
 
 function loadData() {
@@ -191,6 +192,7 @@ function loadData() {
             tutorial.stats = lines[0] === "true"
             tutorial.tasks = lines[1] === "true"
             tutorial.rewards = lines[2] === "true"
+            tutorial.grinding = lines[3] === "true"
         }
     }
 }
@@ -204,7 +206,10 @@ function saveData() {
 
     localStorage["levelupRewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n")
 
-    localStorage["levelupTutorial"] = tutorial.stats + "\n" + tutorial.tasks + "\n" + tutorial.rewards
+    localStorage["levelupTutorial"] = tutorial.stats
+        + "\n" + tutorial.tasks
+        + "\n" + tutorial.rewards
+        + "\n" + tutorial.grinding
 }
 
 function drawStat(label: string, value: string, index: number) {
@@ -233,20 +238,39 @@ function drawTask(task: Task, index: number) {
                 ),
                 () => drawTaskEditPage(index)
             ),
-            domMaybe(
-                newButton(
+            todayTime() === task.last
+                ? newButton(
+                    "Grind", () => {
+                        profile.points++
+                        saveData()
+
+                        drawNotifyPage("+1 reward")
+                    },
+                    true
+                )
+                : newButton(
                     "Done", () => {
                         task.last = todayTime()
                         profile.points++
                         stats[task.stat].value++
 
                         saveData()
-                        drawMainPage()
+
+                        const notification = "+1 reward, +1 " + stats[task.stat].title
+                        if (tutorial.grinding) {
+                            drawNotifyPage(notification)
+                        } else {
+                            drawNotifyPage(notification, () => {
+                                drawNotifyPage("Note: you can further grind a task to gain more reward points", () => {
+                                    tutorial.grinding = true
+                                    saveData()
+                                    drawMainPage()
+                                })
+                            })
+                        }
                     },
                     true
-                ),
-                todayTime() !== task.last
-            )
+                )
         ),
         "boxed"
     )
