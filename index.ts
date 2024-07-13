@@ -109,30 +109,14 @@ class Task {
     }
 }
 
-class Reward {
-    title: string
-    cost: number
-
-    constructor(title: string, cost: number) {
-        this.title = title
-        this.cost = cost
-    }
-}
-
 const stats: Stat[] = []
 const tasks: Task[] = []
-const rewards: Reward[] = []
 
-const profile = {
-    level: 1,
-    points: 0
-}
+let level = 1
 
 const tutorial = {
     stats: false,
     tasks: false,
-    rewards: false,
-    grinding: false,
 }
 
 function loadData() {
@@ -157,10 +141,14 @@ function loadData() {
         const data = localStorage["levelupProfile"] as (string | null)
         if (data) {
             const lines = data.split("\n")
-            profile.level = parseInt(lines[0])
-            profile.points = parseInt(lines[1])
+            level = parseInt(lines[0])
 
-            for (let i = 2; i < lines.length; i++) {
+            let start = 1
+            if (lines[start].indexOf(" ") === -1) {
+                start++
+            }
+
+            for (let i = start; i < lines.length; i++) {
                 const line = lines[i]
                 const j = line.indexOf(" ")
                 stats.push(new Stat(
@@ -168,19 +156,9 @@ function loadData() {
                     parseInt(line.slice(0, j))
                 ))
             }
-        }
-    }
 
-    {
-        const data = localStorage["levelupRewards"] as (string | null)
-        if (data) {
-            const lines = data.split("\n")
-            for (const line of lines) {
-                const i = line.indexOf(" ")
-                rewards.push(new Reward(
-                    line.slice(i + 1),
-                    parseInt(line.slice(0, i))
-                ))
+            if (start === 2) {
+                localStorage["levelupProfile"] = level + "\n" + stats.map((v) => v.value + " " + v.title).join("\n")
             }
         }
     }
@@ -191,25 +169,14 @@ function loadData() {
             const lines = data.split("\n")
             tutorial.stats = lines[0] === "true"
             tutorial.tasks = lines[1] === "true"
-            tutorial.rewards = lines[2] === "true"
-            tutorial.grinding = lines[3] === "true"
         }
     }
 }
 
 function saveData() {
     localStorage["levelupTasks"] = tasks.map((v) => v.last + " " + v.stat + " " + v.title).join("\n")
-
-    localStorage["levelupProfile"] = profile.level
-        + "\n" + profile.points
-        + "\n" + stats.map((v) => v.value + " " + v.title).join("\n")
-
-    localStorage["levelupRewards"] = rewards.map((v) => v.cost + " " + v.title).join("\n")
-
-    localStorage["levelupTutorial"] = tutorial.stats
-        + "\n" + tutorial.tasks
-        + "\n" + tutorial.rewards
-        + "\n" + tutorial.grinding
+    localStorage["levelupProfile"] = level + "\n" + stats.map((v) => v.value + " " + v.title).join("\n")
+    localStorage["levelupTutorial"] = tutorial.stats + "\n" + tutorial.tasks
 }
 
 function drawStat(label: string, value: string, index: number) {
@@ -238,70 +205,18 @@ function drawTask(task: Task, index: number) {
                 ),
                 () => drawTaskEditPage(index)
             ),
-            todayTime() === task.last
-                ? newButton(
-                    "Grind", () => {
-                        profile.points++
-                        saveData()
-
-                        drawNotifyPage("+1 reward")
-                    },
-                    true
-                )
-                : newButton(
+            domMaybe(
+                newButton(
                     "Done", () => {
                         task.last = todayTime()
-                        profile.points++
                         stats[task.stat].value++
 
                         saveData()
-
-                        const notification = "+1 reward, +1 " + stats[task.stat].title
-                        if (tutorial.grinding) {
-                            drawNotifyPage(notification)
-                        } else {
-                            drawNotifyPage(notification, () => {
-                                drawNotifyPage("Note: you can further grind a task to gain more reward points", () => {
-                                    tutorial.grinding = true
-                                    saveData()
-                                    drawMainPage()
-                                })
-                            })
-                        }
+                        drawMainPage()
                     },
                     true
-                )
-        ),
-        "boxed"
-    )
-}
-
-function drawReward(reward: Reward, index: number) {
-    return setClass(
-        newHorizontal(
-            setClick(
-                setClass(
-                    newVertical(
-                        newHeader(reward.title, 1),
-                        newHeader(reward.cost.toString(), 2)
-                    ),
-                    "stretch"
                 ),
-                () => drawRewardEditPage(index)
-            ),
-            newButton(
-                "Buy", () => {
-                    if (profile.points < reward.cost) {
-                        drawNotifyPage("Not enough points", drawRewardsPage);
-                        return
-                    }
-
-                    profile.points -= reward.cost
-                    saveData()
-
-                    drawNotifyPage("Reward: " + reward.title + "!", drawRewardsPage)
-                },
-                true
+                todayTime() !== task.last
             )
         ),
         "boxed"
@@ -407,54 +322,7 @@ function drawTaskEditPage(index: number) {
     )
 }
 
-function drawRewardEditPage(index: number) {
-    const title = newInput("Title")
-    const cost = newInput("Cost", "number")
-
-    if (index !== -1) {
-        cost.value = rewards[index].cost.toString()
-        title.value = rewards[index].title
-    }
-
-    document.body.replaceChildren(
-        newPaddedPage(
-            newHorizontal(
-                newButton("Back", drawRewardsPage),
-                newButton("Done", () => {
-                    if (title.value !== "" && cost.value !== "") {
-                        if (index === -1) {
-                            rewards.push(new Reward(
-                                title.value,
-                                parseInt(cost.value)
-                            ))
-
-                            tutorial.rewards = true
-                        } else {
-                            rewards[index].cost = parseInt(cost.value)
-                            rewards[index].title = title.value
-                        }
-
-                        saveData()
-                        drawRewardsPage()
-                    }
-                }),
-                domMaybe(
-                    newButton("Remove", () => {
-                        rewards.splice(index, 1)
-
-                        saveData()
-                        drawRewardsPage()
-                    }),
-                    index !== -1
-                )
-            ),
-            title,
-            cost
-        ),
-    )
-}
-
-function drawInfo(body: string[], type: "stats" | "tasks" | "rewards", main: () => void, extra?: HTMLElement): HTMLDivElement {
+function drawInfo(body: string[], type: "stats" | "tasks", main: () => void, extra?: HTMLElement): HTMLDivElement {
     return setClass(
         newVertical(
             newHeader("Info", 1),
@@ -485,7 +353,7 @@ function drawMainPage() {
     }
 
     if (levelup) {
-        profile.level++
+        level++
         for (const stat of stats) {
             stat.value -= 10
         }
@@ -499,7 +367,6 @@ function drawMainPage() {
         newPaddedPage(
             newHorizontal(
                 newButton("Stats", drawStatsPage),
-                newButton("Rewards", drawRewardsPage),
                 newButton("Add Task", () => drawTaskEditPage(-1))
             ),
             ...(tutorial.tasks ? tasks.map(drawTask) : [
@@ -521,7 +388,7 @@ function drawStatsPage() {
                 newButton("Back", drawMainPage),
                 newButton("Add Stat", () => drawStatEditPage(-1))
             ),
-            drawStat("Level", profile.level.toString(), -1),
+            drawStat("Level", level.toString(), -1),
             ...(tutorial.stats ? stats.map((v, i) => drawStat(v.title, v.value + "/10", i)) : [
                 drawInfo(
                     [
@@ -546,27 +413,6 @@ function drawStatsPage() {
                         stats.length === 0
                     )
                 )
-            ])
-        )
-    )
-}
-
-
-function drawRewardsPage() {
-    document.body.replaceChildren(
-        newPaddedPage(
-            newHorizontal(
-                newButton("Back", drawMainPage),
-                newButton("Add Reward", () => drawRewardEditPage(-1)),
-            ),
-            drawStat("Points", profile.points.toString(), -1),
-            ...(tutorial.rewards ? rewards.map(drawReward) : [
-                drawInfo([
-                    "Completion of tasks grants reward points, which can be used to buy, well, rewards",
-                    "Rewards are any pleasurable activity you wish to partake in, like social media, fast food, etc.",
-                    "Note that you personally need to maintain the discipline to not do those activies unless bought",
-                    "Click on the 'Add Reward' button to add a reward, and set a point price accordingly"
-                ], "rewards", drawRewardsPage)
             ])
         )
     )
