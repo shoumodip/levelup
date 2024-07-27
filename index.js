@@ -102,6 +102,7 @@ const tutorial = {
     stats: false,
     tasks: false,
     rewards: false,
+    defaults: false,
 };
 function loadData() {
     {
@@ -152,6 +153,7 @@ function loadData() {
             tutorial.stats = lines[0] === "true";
             tutorial.tasks = lines[1] === "true";
             tutorial.rewards = lines[2] === "true";
+            tutorial.defaults = lines[3] === "true";
         }
     }
 }
@@ -159,7 +161,10 @@ function saveData() {
     localStorage["levelupStats"] = profile.level + "\n" + stats.map((v) => v.value + " " + v.title).join("\n");
     localStorage["levelupTasks"] = tasks.map((v) => v.last + " " + v.stat + " " + v.title).join("\n");
     localStorage["levelupRewards"] = profile.points + "\n" + rewards.map((v) => v.cost + " " + v.title).join("\n");
-    localStorage["levelupTutorial"] = tutorial.stats + "\n" + tutorial.tasks + "\n" + tutorial.rewards;
+    localStorage["levelupTutorial"] = tutorial.stats +
+        "\n" + tutorial.tasks +
+        "\n" + tutorial.rewards +
+        "\n" + tutorial.defaults;
 }
 function drawStat(label, value, index) {
     return setClick(setClass(newHorizontal(setClass(newHeader(label, 1), "stretch"), newHeader(value, 1)), "boxed"), () => index !== -1 ? drawStatEditPage(index) : null);
@@ -309,17 +314,8 @@ function drawStatsPage() {
             "Stats are fields of interest you can improve in",
             "Each daily task is assigned a specific stat, which adds a stat point upon completion",
             "When all stats reach 10 or more, you level up",
-            "Click on the 'Add Stat' button to add a stat to your profile" +
-                (stats.length == 0 ? ", or click on 'Add sample stats' to add some sample stats" : "")
-        ], "stats", drawStatsPage, domMaybe(newButton("Add sample stats", () => {
-            stats.push(new Stat("Strength", 0));
-            stats.push(new Stat("Vitality", 0));
-            stats.push(new Stat("Intelligence", 0));
-            stats.push(new Stat("Practicality", 0));
-            tutorial.stats = true;
-            saveData();
-            drawStatsPage();
-        }, true), stats.length === 0))
+            "Click on the 'Add Stat' button to add a stat to your profile"
+        ], "stats", drawStatsPage)
     ])));
 }
 function drawRewardsPage() {
@@ -332,14 +328,18 @@ function drawRewardsPage() {
         ], "rewards", drawRewardsPage)
     ])));
 }
-function drawNotifyPage(message, back = drawMainPage) {
+function notifyOver() {
+    document.body.classList.remove("center");
+    document.body.classList.remove("sidePadding");
+}
+function drawNotifyPage(message, back = drawMainPage, buttons) {
     document.body.classList.add("center");
     document.body.classList.add("sidePadding");
-    document.body.replaceChildren(setClass(newVertical(newHeader(message, 1), newButton("OK", () => {
-        document.body.classList.remove("center");
-        document.body.classList.remove("sidePadding");
-        back();
-    })), "boxed", "center"));
+    document.body.replaceChildren(setClass(newVertical(newHeader(message, 1), (buttons !== undefined ? newHorizontal(...buttons) :
+        newButton("OK", () => {
+            notifyOver();
+            back();
+        }))), "boxed", "center"));
 }
 window.onload = () => {
     const font = new FontFace("No Continue", "url('fonts/NoContinue.ttf')");
@@ -347,22 +347,60 @@ window.onload = () => {
     font.load();
     document.fonts.ready.then(() => {
         loadData();
-        let missed = 0;
         const today = todayTime();
-        for (const task of tasks) {
-            if (today - task.last > DAY) {
-                missed++;
-                task.last = today - DAY;
+        if (tutorial.defaults) {
+            let missed = 0;
+            for (const task of tasks) {
+                if (today - task.last > DAY) {
+                    missed++;
+                    task.last = today - DAY;
+                }
+            }
+            if (missed !== 0) {
+                saveData();
+            }
+            if (missed > 1) {
+                const penalties = [
+                    "No phone for 1 day",
+                    "50 burpees",
+                    "Squat hold for 3 mins",
+                    "Plank hold for 3 mins",
+                ];
+                const penalty = penalties[Math.floor(Math.random() * penalties.length)];
+                drawNotifyPage("Penalty: " + penalty);
+            }
+            else {
+                drawMainPage();
             }
         }
-        if (missed !== 0) {
-            saveData();
-        }
-        if (missed > 1) {
-            drawNotifyPage("Penalty: No phone for 1 day");
-        }
         else {
-            drawMainPage();
+            drawNotifyPage("Setup recommended defaults?", drawMainPage, [
+                newButton("Yes", () => {
+                    tutorial.defaults = true;
+                    stats.push(new Stat("Strength", 0));
+                    stats.push(new Stat("Vitality", 0));
+                    stats.push(new Stat("Agility", 0));
+                    stats.push(new Stat("Intelligence", 0));
+                    stats.push(new Stat("Practicality", 0));
+                    tasks.push(new Task("Do 50 pushups/squats", 0, today - DAY));
+                    tasks.push(new Task("Walk 1 kilometer", 1, today - DAY));
+                    tasks.push(new Task("Stretch for 2 minutes", 2, today - DAY));
+                    tasks.push(new Task("Practise 50 questions", 3, today - DAY));
+                    tasks.push(new Task("Complete 3 chores", 4, today - DAY));
+                    rewards.push(new Reward("30 mins of youtube", 1));
+                    rewards.push(new Reward("30 mins of social media", 1));
+                    rewards.push(new Reward("Eat something unhealthy", 1));
+                    saveData();
+                    notifyOver();
+                    drawMainPage();
+                }),
+                newButton("No", () => {
+                    tutorial.defaults = true;
+                    saveData();
+                    notifyOver();
+                    drawMainPage();
+                })
+            ]);
         }
     });
 };
