@@ -211,6 +211,9 @@ function drawStatEditPage(index) {
         let j = 0;
         for (let i = 0; i < tasks.length; i++) {
             if (tasks[i].stat !== index) {
+                if (tasks[i].stat > index) {
+                    tasks[i].stat--;
+                }
                 tasks[j++] = tasks[i];
             }
         }
