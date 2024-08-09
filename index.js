@@ -175,7 +175,7 @@ function drawTask(task, index) {
         profile.points++;
         stats[task.stat].value++;
         saveData();
-        drawMainPage();
+        drawNotifyPage("+1 reward, +1 " + stats[task.stat].title);
     }, true), todayTime() !== task.last)), "boxed");
 }
 function drawReward(reward, index) {

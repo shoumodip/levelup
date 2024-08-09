@@ -251,7 +251,7 @@ function drawTask(task: Task, index: number) {
                         stats[task.stat].value++
 
                         saveData()
-                        drawMainPage()
+                        drawNotifyPage("+1 reward, +1 " + stats[task.stat].title)
                     },
                     true
                 ),
@@ -278,7 +278,7 @@ function drawReward(reward: Reward, index: number) {
             newButton(
                 "Buy", () => {
                     if (profile.points < reward.cost) {
-                        drawNotifyPage("Not enough points", drawRewardsPage);
+                        drawNotifyPage("Not enough points", drawRewardsPage)
                         return
                     }
 
