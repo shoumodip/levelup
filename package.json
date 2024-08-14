@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npx tsc && cordova build"
+    "build": "npx tsc && cordova build",
+    "setup": "npm install && cordova platform add android"
   },
   "keywords": [],
   "author": "Shoumodip Kar",

@@ -3,8 +3,7 @@ Level up IRL
 
 ## Quick Start
 ```console
-$ npm install
-$ cordova platform add android # You can try ios, but it's not tested to work
+$ npm run setup # Only once, after cloning the repo
 $ npm run build
 ```
 
