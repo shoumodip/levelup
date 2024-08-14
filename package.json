@@ -1,0 +1,21 @@
+{
+  "name": "com.shoumodipkar.levelup",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc && cordova build"
+  },
+  "keywords": [],
+  "author": "Shoumodip Kar",
+  "license": "MIT",
+  "description": "Level up IRL",
+  "devDependencies": {
+    "cordova-android": "^13.0.0",
+    "typescript": "^5.5.4"
+  },
+  "cordova": {
+    "platforms": [
+      "android"
+    ]
+  }
+}

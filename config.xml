@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.shoumodipkar.levelup" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Level Up</name>
+    <description>Level up IRL</description>
+    <author email="shoumodipkar@gmail.com" href="https://github.com/shoumodip">
+        Shoumodip Kar
+    </author>
+
+    <platform name="android">
+        <icon src="www/img/logo.png" />
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="www/img/splash.png" />
+        <preference name="AndroidWindowSplashScreenBackground" value="#181818" />
+    </platform>
+
+    <content src="index.html" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+</widget>
