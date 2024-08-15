@@ -204,11 +204,26 @@ function drawTask(task: Task, index: number) {
             domMaybe(
                 newButton(
                     "Done", () => {
-                        task.last = todayTime()
+                        const now = todayTime()
+
+                        task.last = now
                         stats[task.stat].value++
 
                         saveData()
-                        drawMainPage()
+
+                        let all = true
+                        for (let task of tasks) {
+                            if (task.last !== now) {
+                                all = false
+                                break
+                            }
+                        }
+
+                        if (all) {
+                            drawNotifyPage("All tasks complete!")
+                        } else {
+                            drawMainPage()
+                        }
                     },
                     true
                 ),
