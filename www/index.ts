@@ -465,15 +465,7 @@ window.onload = () => {
             }
 
             if (missed > 1) {
-                const penalties = [
-                    "No phone for 1 day",
-                    "100 burpees",
-                    "Squat hold for 3 mins",
-                    "Plank hold for 3 mins",
-                ]
-
-                const penalty = penalties[Math.floor(Math.random() * penalties.length)]
-                drawNotifyPage("Penalty: " + penalty)
+                drawNotifyPage("Penalty: 100 burpees")
             } else {
                 drawMainPage()
             }
