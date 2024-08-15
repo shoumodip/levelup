@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npx tsc && cordova build",
+    "load": "npx tsc && cordova run android",
+    "build": "npx tsc && cordova build android",
     "setup": "npm install && cordova platform add android"
   },
   "keywords": [],
