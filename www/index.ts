@@ -42,21 +42,6 @@ function setClick<T extends HTMLElement>(element: T, callback: (this: GlobalEven
     return element
 }
 
-function domMaybe<T extends HTMLElement>(element: T, cond: boolean): (T | null) {
-    if (cond) {
-        return element
-    } else {
-        return null
-    }
-}
-
-function newInput(title: string, value: string): HTMLInputElement {
-    const input = document.createElement("input")
-    input.placeholder = title
-    input.value = value
-    return input
-}
-
 function setColor<T extends HTMLElement>(element: T, color: string): T {
     element.style.color = color
     return element
@@ -70,6 +55,27 @@ function setBorder<T extends HTMLElement>(element: T, color: string): T {
 function setFontSize<T extends HTMLElement>(element: T, size: string): T {
     element.style.fontSize = size
     return element
+}
+
+function setDimensions<T extends HTMLElement>(element: T, width: string, height: string): T {
+    element.style.width = width
+    element.style.height = height
+    return element
+}
+
+function domMaybe<T extends HTMLElement>(element: T, cond: boolean): (T | null) {
+    if (cond) {
+        return element
+    } else {
+        return null
+    }
+}
+
+function newInput(title: string, value: string): HTMLInputElement {
+    const input = document.createElement("input")
+    input.placeholder = title
+    input.value = value
+    return input
 }
 
 function newHeader(title: string, level: number, asHtml?: boolean): HTMLHeadingElement {
@@ -161,6 +167,7 @@ interface SelectorItem {
 interface Selector {
     items: SelectorItem[]
     index: number
+    prefixCoin?: boolean
 }
 
 interface Task {
@@ -188,6 +195,13 @@ interface Reward {
     cost: number
 }
 
+interface Sounds {
+    levelup: HTMLAudioElement
+    buyReward: HTMLAudioElement
+    taskCompleted: HTMLAudioElement
+    questCompleted: HTMLAudioElement
+}
+
 interface Symbols {
     add: HTMLElement
     back: HTMLElement
@@ -196,6 +210,7 @@ interface Symbols {
     delete: HTMLElement
 }
 
+let sounds: Sounds
 let symbols: Symbols
 
 let level: Attrib
@@ -304,11 +319,15 @@ function drawSelector(selector: Selector): HTMLElement {
     let panel = newHorizontal()
     for (let i = 0; i < selector.items.length; i++) {
         const item = selector.items[i]
+
+        const fontSize = "1.4rem"
+        let label: HTMLElement = setColor(setFontSize(newHeader(item.title, 2), fontSize), item.color)
+        if (selector.prefixCoin) {
+            label = newHorizontal(setDimensions(symbols.coin, fontSize, fontSize), label)
+        }
+
         const button = setClick(
-            setClass(
-                setColor(newHeader(item.title, 1), item.color),
-                "boxed", "center", "navigator"
-            ),
+            setClass(label, "boxed", "center", "navigator"),
             () => {
                 selector.index = i
                 for (const it of panel.children) {
@@ -354,6 +373,21 @@ function drawAttrib(attrib: Attrib): HTMLElement {
     )
 }
 
+function drawMoney(): HTMLElement {
+    return setClass(
+        newFooterPanel(
+            setClass(
+                newHorizontal(
+                    symbols.coin,
+                    newHeader(String(money), 1)
+                ),
+                "center"
+            )
+        ),
+        "stretch",
+    )
+}
+
 function drawTask(task: Task, index: number): HTMLElement {
     return setClass(
         newHorizontal(
@@ -374,6 +408,13 @@ function drawTask(task: Task, index: number): HTMLElement {
 
                         const popup = { visible: false, title: "", lines: [] }
                         addPointsOverall(attribs[task.attrib], 1, popup)
+
+                        if (popup.visible) {
+                            sounds.levelup.play()
+                        } else {
+                            sounds.taskCompleted.play()
+                        }
+
                         drawPopup(popup, drawTasksPage)
                     }),
                     "right", "vcenter-margined"
@@ -435,7 +476,8 @@ function drawTasksPage() {
             newHeader("Tasks", 1),
             setClass(newButton(symbols.add, () => drawTaskEditPage()), "right")
         ),
-        newPaddedPage(...tasks.map(drawTask))
+        newPaddedPage(...tasks.map(drawTask)),
+        drawMoney()
     )
 }
 
@@ -465,6 +507,7 @@ function drawQuest(quest: Quest, index: number): HTMLElement {
                     quests.splice(index, 1)
                     node.remove()
 
+                    sounds.questCompleted.play()
                     addPointsOverall(attribs[quest.attrib], quest.points, popup)
                     drawPopup(popup, drawQuestsPage)
                 }),
@@ -538,7 +581,8 @@ function drawQuestsPage() {
             newHeader("Quests", 1),
             setClass(newButton(symbols.add, () => drawQuestEditPage()), "right")
         ),
-        newPaddedPage(...quests.map(drawQuest))
+        newPaddedPage(...quests.map(drawQuest)),
+        drawMoney()
     )
 }
 
@@ -565,7 +609,10 @@ function drawReward(reward: Reward, index: number): HTMLElement {
                 setClass(
                     newVertical(
                         newHeader(reward.title, 1),
-                        setColor(newHeader(String(reward.cost), 2), moneyColor(reward.cost)),
+                        newHorizontal(
+                            setDimensions(symbols.coin, "1.1rem", "1.1rem"),
+                            setColor(newHeader(String(reward.cost), 2), moneyColor(reward.cost))
+                        ),
                     ),
                     "flex-one"
                 ),
@@ -575,6 +622,7 @@ function drawReward(reward: Reward, index: number): HTMLElement {
                 setClass(
                     newButton(symbols.done, () => {
                         money -= reward.cost
+                        sounds.buyReward.play()
                         saveState()
                         drawRewardsPage()
                     }),
@@ -593,7 +641,8 @@ function drawRewardEditPage(index?: number) {
 
     const costSelector: Selector = {
         items: [3, 6, 12, 24].map(it => { return { title: String(it), color: moneyColor(it) } }),
-        index: reward ? reward.cost / 3 - 1 : 0
+        index: reward ? Math.log2(reward.cost / 3) : 0,
+        prefixCoin: true
     }
 
     document.body.replaceChildren(
@@ -642,18 +691,7 @@ function drawRewardsPage() {
             setClass(newButton(symbols.add, () => drawRewardEditPage()), "right")
         ),
         newPaddedPage(...rewards.map(drawReward)),
-        setClass(
-            newFooterPanel(
-                setClass(
-                    newHorizontal(
-                        symbols.coin,
-                        newHeader(`${money}`, 1)
-                    ),
-                    "center"
-                )
-            ),
-            "stretch",
-        )
+        drawMoney()
     )
 }
 
@@ -743,6 +781,15 @@ function drawMainPage() {
                 newVertical(...attribs.map(drawAttrib)),
                 "boxed"
             ),
+            setClass(
+                newVertical(
+                    newHorizontal(
+                        setDimensions(symbols.coin, "1.4rem", "1.4rem"),
+                        setClass(newHeader(String(money), 2), "right")
+                    )
+                ),
+                "boxed"
+            ),
             newHorizontal(
                 navigator("Notes", drawNotesPage),
                 navigator("Tasks", drawTasksPage),
@@ -754,6 +801,13 @@ function drawMainPage() {
 }
 
 window.onload = () => {
+    sounds = {
+        levelup: document.getElementById("sound-levelup") as HTMLAudioElement,
+        buyReward: document.getElementById("sound-buy-reward") as HTMLAudioElement,
+        taskCompleted: document.getElementById("sound-task-completed") as HTMLAudioElement,
+        questCompleted: document.getElementById("sound-quest-completed") as HTMLAudioElement
+    }
+
     symbols = new Proxy({
         add: document.getElementById("svg-icon-add") as HTMLElement,
         back: document.getElementById("svg-icon-back") as HTMLElement,

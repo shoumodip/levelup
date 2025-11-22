@@ -35,6 +35,23 @@ function setClick(element, callback) {
     element.onclick = callback;
     return element;
 }
+function setColor(element, color) {
+    element.style.color = color;
+    return element;
+}
+function setBorder(element, color) {
+    element.style.borderColor = color;
+    return element;
+}
+function setFontSize(element, size) {
+    element.style.fontSize = size;
+    return element;
+}
+function setDimensions(element, width, height) {
+    element.style.width = width;
+    element.style.height = height;
+    return element;
+}
 function domMaybe(element, cond) {
     if (cond) {
         return element;
@@ -48,18 +65,6 @@ function newInput(title, value) {
     input.placeholder = title;
     input.value = value;
     return input;
-}
-function setColor(element, color) {
-    element.style.color = color;
-    return element;
-}
-function setBorder(element, color) {
-    element.style.borderColor = color;
-    return element;
-}
-function setFontSize(element, size) {
-    element.style.fontSize = size;
-    return element;
 }
 function newHeader(title, level, asHtml) {
     const header = document.createElement("h" + level);
@@ -120,6 +125,7 @@ const NavigatorColors = {
     Quests: "#A067FF",
     Rewards: "#31D27A"
 };
+let sounds;
 let symbols;
 let level;
 let money;
@@ -206,7 +212,12 @@ function drawSelector(selector) {
     let panel = newHorizontal();
     for (let i = 0; i < selector.items.length; i++) {
         const item = selector.items[i];
-        const button = setClick(setClass(setColor(newHeader(item.title, 1), item.color), "boxed", "center", "navigator"), () => {
+        const fontSize = "1.4rem";
+        let label = setColor(setFontSize(newHeader(item.title, 2), fontSize), item.color);
+        if (selector.prefixCoin) {
+            label = newHorizontal(setDimensions(symbols.coin, fontSize, fontSize), label);
+        }
+        const button = setClick(setClass(label, "boxed", "center", "navigator"), () => {
             selector.index = i;
             for (const it of panel.children) {
                 const child = it;
@@ -232,11 +243,20 @@ function drawAttrib(attrib) {
     const color = AttribColors[attrib.title];
     return newVertical(newHorizontal(setColor(setClass(newHeader(`${attrib.title} ${numberToRomanString(attrib.level)}`, 1), "stretch"), color), newHeader(`${attrib.points}/${attrib.needed}`, 2)), drawProgressBar(attrib.points, attrib.needed, color));
 }
+function drawMoney() {
+    return setClass(newFooterPanel(setClass(newHorizontal(symbols.coin, newHeader(String(money), 1)), "center")), "stretch");
+}
 function drawTask(task, index) {
     return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(task.title, 1), setColor(newHeader(attribs[task.attrib].title, 2), AttribColors[attribs[task.attrib].title])), "flex-one"), () => drawTaskEditPage(index)), domMaybe(setClass(newButton(symbols.done, () => {
         task.lastDone = todayTime();
         const popup = { visible: false, title: "", lines: [] };
         addPointsOverall(attribs[task.attrib], 1, popup);
+        if (popup.visible) {
+            sounds.levelup.play();
+        }
+        else {
+            sounds.taskCompleted.play();
+        }
         drawPopup(popup, drawTasksPage);
     }), "right", "vcenter-margined"), todayTime() !== task.lastDone)), "boxed");
 }
@@ -267,7 +287,7 @@ function drawTaskEditPage(index) {
     }), task !== undefined)), drawSelector(attribSelector)));
 }
 function drawTasksPage() {
-    document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Tasks", 1), setClass(newButton(symbols.add, () => drawTaskEditPage()), "right")), newPaddedPage(...tasks.map(drawTask)));
+    document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Tasks", 1), setClass(newButton(symbols.add, () => drawTaskEditPage()), "right")), newPaddedPage(...tasks.map(drawTask)), drawMoney());
 }
 function drawQuest(quest, index) {
     let node;
@@ -280,6 +300,7 @@ function drawQuest(quest, index) {
         };
         quests.splice(index, 1);
         node.remove();
+        sounds.questCompleted.play();
         addPointsOverall(attribs[quest.attrib], quest.points, popup);
         drawPopup(popup, drawQuestsPage);
     }), "right", "vcenter-margined")), "boxed");
@@ -322,7 +343,7 @@ function drawQuestEditPage(index) {
     }), quest !== undefined)), drawSelector(attribSelector), drawSelector(pointSelector)));
 }
 function drawQuestsPage() {
-    document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Quests", 1), setClass(newButton(symbols.add, () => drawQuestEditPage()), "right")), newPaddedPage(...quests.map(drawQuest)));
+    document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Quests", 1), setClass(newButton(symbols.add, () => drawQuestEditPage()), "right")), newPaddedPage(...quests.map(drawQuest)), drawMoney());
 }
 function moneyColor(money) {
     if (money == 3) {
@@ -337,8 +358,9 @@ function moneyColor(money) {
     return "#7EE7F5"; // Diamond
 }
 function drawReward(reward, index) {
-    return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(reward.title, 1), setColor(newHeader(String(reward.cost), 2), moneyColor(reward.cost))), "flex-one"), () => drawRewardEditPage(index)), domMaybe(setClass(newButton(symbols.done, () => {
+    return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(reward.title, 1), newHorizontal(setDimensions(symbols.coin, "1.1rem", "1.1rem"), setColor(newHeader(String(reward.cost), 2), moneyColor(reward.cost)))), "flex-one"), () => drawRewardEditPage(index)), domMaybe(setClass(newButton(symbols.done, () => {
         money -= reward.cost;
+        sounds.buyReward.play();
         saveState();
         drawRewardsPage();
     }), "right", "vcenter-margined"), money >= reward.cost)), "boxed");
@@ -348,7 +370,8 @@ function drawRewardEditPage(index) {
     const input = newInput("Reward Title", reward ? reward.title : "");
     const costSelector = {
         items: [3, 6, 12, 24].map(it => { return { title: String(it), color: moneyColor(it) }; }),
-        index: reward ? reward.cost / 3 - 1 : 0
+        index: reward ? Math.log2(reward.cost / 3) : 0,
+        prefixCoin: true
     };
     document.body.replaceChildren(newPaddedPage(newHorizontal(newButton(symbols.back, drawRewardsPage), setClass(input, "stretch"), newButton(symbols.done, () => {
         if (input.value === "") {
@@ -374,7 +397,7 @@ function drawRewardEditPage(index) {
     }), reward !== undefined)), drawSelector(costSelector)));
 }
 function drawRewardsPage() {
-    document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Rewards", 1), setClass(newButton(symbols.add, () => drawRewardEditPage()), "right")), newPaddedPage(...rewards.map(drawReward)), setClass(newFooterPanel(setClass(newHorizontal(symbols.coin, newHeader(`${money}`, 1)), "center")), "stretch"));
+    document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Rewards", 1), setClass(newButton(symbols.add, () => drawRewardEditPage()), "right")), newPaddedPage(...rewards.map(drawReward)), drawMoney());
 }
 function drawNote(index) {
     return setClass(newHorizontal(setClick(setClass(setFontSize(newHeader(notes[index], 1), "1.1rem"), "flex-one", "vcenter-margined"), () => drawNoteEditPage(index)), setClass(newButton(symbols.delete, () => {
@@ -407,9 +430,15 @@ function drawMainPage() {
         const color = NavigatorColors[title];
         return setBorder(setColor(setClick(setClass(setFontSize(newHeader(title, 1), "1.1rem"), "boxed", "center", "navigator"), click), color), color);
     }
-    document.body.replaceChildren(newPaddedPage(setClass(drawAttrib(level), "boxed"), setClass(newVertical(...attribs.map(drawAttrib)), "boxed"), newHorizontal(navigator("Notes", drawNotesPage), navigator("Tasks", drawTasksPage), navigator("Quests", drawQuestsPage), navigator("Rewards", drawRewardsPage))));
+    document.body.replaceChildren(newPaddedPage(setClass(drawAttrib(level), "boxed"), setClass(newVertical(...attribs.map(drawAttrib)), "boxed"), setClass(newVertical(newHorizontal(setDimensions(symbols.coin, "1.4rem", "1.4rem"), setClass(newHeader(String(money), 2), "right"))), "boxed"), newHorizontal(navigator("Notes", drawNotesPage), navigator("Tasks", drawTasksPage), navigator("Quests", drawQuestsPage), navigator("Rewards", drawRewardsPage))));
 }
 window.onload = () => {
+    sounds = {
+        levelup: document.getElementById("sound-levelup"),
+        buyReward: document.getElementById("sound-buy-reward"),
+        taskCompleted: document.getElementById("sound-task-completed"),
+        questCompleted: document.getElementById("sound-quest-completed")
+    };
     symbols = new Proxy({
         add: document.getElementById("svg-icon-add"),
         back: document.getElementById("svg-icon-back"),
