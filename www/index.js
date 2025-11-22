@@ -57,6 +57,10 @@ function setBorder(element, color) {
     element.style.borderColor = color;
     return element;
 }
+function setFontSize(element, size) {
+    element.style.fontSize = size;
+    return element;
+}
 function newHeader(title, level, asHtml) {
     const header = document.createElement("h" + level);
     if (asHtml) {
@@ -290,7 +294,7 @@ function drawQuestEditPage(index) {
     };
     const pointSelector = {
         items: [10, 20, 30, 40, 50, 60, 70, 80].map(it => { return { title: String(it), color: AttribColors.Level }; }),
-        index: 0
+        index: quest ? quest.points / 10 - 1 : 0
     };
     document.body.replaceChildren(newPaddedPage(newHorizontal(newButton(symbols.back, drawQuestsPage), setClass(input, "stretch"), newButton(symbols.done, () => {
         if (input.value === "") {
@@ -321,13 +325,13 @@ function drawQuestsPage() {
     document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Quests", 1), setClass(newButton(symbols.add, () => drawQuestEditPage()), "right")), newPaddedPage(...quests.map(drawQuest)));
 }
 function moneyColor(money) {
-    if (money <= 6) {
+    if (money == 3) {
         return "#CD7F32"; // Bronze
     }
-    if (money <= 12) {
+    if (money == 6) {
         return "#CFCFCF"; // Silver
     }
-    if (money <= 18) {
+    if (money == 12) {
         return "#FFD93D"; // Gold
     }
     return "#7EE7F5"; // Diamond
@@ -343,8 +347,8 @@ function drawRewardEditPage(index) {
     const reward = index === undefined ? undefined : rewards[index];
     const input = newInput("Reward Title", reward ? reward.title : "");
     const costSelector = {
-        items: [3, 6, 9, 12, 15, 18, 21, 24].map(it => { return { title: String(it), color: moneyColor(it) }; }),
-        index: 0
+        items: [3, 6, 12, 24].map(it => { return { title: String(it), color: moneyColor(it) }; }),
+        index: reward ? reward.cost / 3 - 1 : 0
     };
     document.body.replaceChildren(newPaddedPage(newHorizontal(newButton(symbols.back, drawRewardsPage), setClass(input, "stretch"), newButton(symbols.done, () => {
         if (input.value === "") {
@@ -373,7 +377,7 @@ function drawRewardsPage() {
     document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Rewards", 1), setClass(newButton(symbols.add, () => drawRewardEditPage()), "right")), newPaddedPage(...rewards.map(drawReward)), setClass(newFooterPanel(setClass(newHorizontal(symbols.coin, newHeader(`${money}`, 1)), "center")), "stretch"));
 }
 function drawNote(index) {
-    return setClass(newHorizontal(setClick(setClass(newHeader(notes[index], 1), "flex-one", "vcenter-margined"), () => drawNoteEditPage(index)), setClass(newButton(symbols.done, () => {
+    return setClass(newHorizontal(setClick(setClass(setFontSize(newHeader(notes[index], 1), "1.1rem"), "flex-one", "vcenter-margined"), () => drawNoteEditPage(index)), setClass(newButton(symbols.delete, () => {
         notes.splice(index, 1);
         saveState();
         drawNotesPage();
@@ -393,11 +397,7 @@ function drawNoteEditPage(index) {
         }
         saveState();
         drawNotesPage();
-    }), domMaybe(newButton(symbols.delete, () => {
-        notes.splice(index, 1);
-        saveState();
-        drawNotesPage();
-    }), index !== undefined))));
+    }))));
 }
 function drawNotesPage() {
     document.body.replaceChildren(newHeaderPanel(newButton(symbols.back, drawMainPage), newHeader("Notes", 1), setClass(newButton(symbols.add, () => drawNoteEditPage()), "right")), newPaddedPage(...notes.map((_, index) => drawNote(index))));
@@ -405,9 +405,7 @@ function drawNotesPage() {
 function drawMainPage() {
     function navigator(title, click) {
         const color = NavigatorColors[title];
-        const header = newHeader(title, 1);
-        header.style.fontSize = "1.1rem";
-        return setBorder(setColor(setClick(setClass(header, "boxed", "center", "navigator"), click), color), color);
+        return setBorder(setColor(setClick(setClass(setFontSize(newHeader(title, 1), "1.1rem"), "boxed", "center", "navigator"), click), color), color);
     }
     document.body.replaceChildren(newPaddedPage(setClass(drawAttrib(level), "boxed"), setClass(newVertical(...attribs.map(drawAttrib)), "boxed"), newHorizontal(navigator("Notes", drawNotesPage), navigator("Tasks", drawTasksPage), navigator("Quests", drawQuestsPage), navigator("Rewards", drawRewardsPage))));
 }

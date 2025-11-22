@@ -67,6 +67,11 @@ function setBorder<T extends HTMLElement>(element: T, color: string): T {
     return element
 }
 
+function setFontSize<T extends HTMLElement>(element: T, size: string): T {
+    element.style.fontSize = size
+    return element
+}
+
 function newHeader(title: string, level: number, asHtml?: boolean): HTMLHeadingElement {
     const header = document.createElement("h" + level) as HTMLHeadingElement
     if (asHtml) {
@@ -482,7 +487,7 @@ function drawQuestEditPage(index?: number) {
 
     const pointSelector: Selector = {
         items: [10, 20, 30, 40, 50, 60, 70, 80].map(it => { return { title: String(it), color: AttribColors.Level } }),
-        index: 0
+        index: quest ? quest.points / 10 - 1 : 0
     }
 
     document.body.replaceChildren(
@@ -538,15 +543,15 @@ function drawQuestsPage() {
 }
 
 function moneyColor(money: number): string {
-    if (money <= 6) {
+    if (money == 3) {
         return "#CD7F32" // Bronze
     }
 
-    if (money <= 12) {
+    if (money == 6) {
         return "#CFCFCF" // Silver
     }
 
-    if (money <= 18) {
+    if (money == 12) {
         return "#FFD93D" // Gold
     }
 
@@ -587,8 +592,8 @@ function drawRewardEditPage(index?: number) {
     const input = newInput("Reward Title", reward ? reward.title : "")
 
     const costSelector: Selector = {
-        items: [3, 6, 9, 12, 15, 18, 21, 24].map(it => { return { title: String(it), color: moneyColor(it) } }),
-        index: 0
+        items: [3, 6, 12, 24].map(it => { return { title: String(it), color: moneyColor(it) } }),
+        index: reward ? reward.cost / 3 - 1 : 0
     }
 
     document.body.replaceChildren(
@@ -657,13 +662,13 @@ function drawNote(index: number): HTMLElement {
         newHorizontal(
             setClick(
                 setClass(
-                    newHeader(notes[index], 1),
+                    setFontSize(newHeader(notes[index], 1), "1.1rem"),
                     "flex-one", "vcenter-margined"
                 ),
                 () => drawNoteEditPage(index)
             ),
             setClass(
-                newButton(symbols.done, () => {
+                newButton(symbols.delete, () => {
                     notes.splice(index, 1)
                     saveState()
                     drawNotesPage()
@@ -695,15 +700,7 @@ function drawNoteEditPage(index?: number) {
 
                     saveState()
                     drawNotesPage()
-                }),
-                domMaybe(
-                    newButton(symbols.delete, () => {
-                        notes.splice(index as number, 1)
-                        saveState()
-                        drawNotesPage()
-                    }),
-                    index !== undefined
-                )
+                })
             )
         )
     )
@@ -719,16 +716,15 @@ function drawNotesPage() {
         newPaddedPage(...notes.map((_, index) => drawNote(index)))
     )
 }
+
 function drawMainPage() {
     function navigator(title: NavigatorTitle, click: (this: GlobalEventHandlers, ev: MouseEvent) => any): HTMLElement {
         const color = NavigatorColors[title]
-        const header = newHeader(title, 1)
-        header.style.fontSize = "1.1rem"
         return setBorder(
             setColor(
                 setClick(
                     setClass(
-                        header,
+                        setFontSize(newHeader(title, 1), "1.1rem"),
                         "boxed", "center", "navigator"
                     ),
                     click
