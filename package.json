@@ -1,0 +1,23 @@
+{
+  "name": "levelup",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "load": "npx tsc && cordova run android",
+    "build": "npx tsc && cordova build android",
+    "setup": "npm install && cordova platform add android"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "cordova": "^12.0.0",
+    "cordova-android": "^14.0.1",
+    "typescript": "^5.9.3"
+  },
+  "cordova": {
+    "platforms": [
+      "android"
+    ]
+  }
+}
