@@ -29,6 +29,7 @@ h2 {
     margin: 0;
     font-size: 1.1rem;
     font-weight: normal;
+    background-color: inherit !important;
 }
 
 svg {
@@ -118,48 +119,14 @@ button.fixed {
     margin-left: auto;
 }
 
-.header {
-    top: 0;
-    display: flex;
-    z-index: 1000;
-    position: sticky;
-    align-items: center;
-    justify-content: flex-start;
-    background-color: #303030;
-
-    margin-bottom: -0.3rem;
-}
-
 .footer {
-    width: 100;
+    width: 100%;
     bottom: 0;
     display: flex;
     z-index: 1000;
-    padding: 0.6rem;
     position: fixed;
     align-items: center;
     justify-content: center;
-    background-color: #303030;
-}
-
-.footer svg {
-    translate: -0.65rem 0;
-}
-
-.footer h1 {
-    translate: -0.65rem 0;
-    background-color: #303030;
-}
-
-.header h1 {
-    left: 50%;
-    position: absolute;
-    transform: translateX(-50%);
-    background-color: #303030;
-}
-
-.header button {
-    border: 0px;
 }
 
 .center {
@@ -207,6 +174,20 @@ body, .vertical {
     gap: 0.5rem;
     display: flex;
     flex-direction: column;
+}
+
+.floating {
+    left: 50%;
+    width: 4rem;
+    height: 4rem;
+    bottom: 6rem;
+    position: fixed;
+    transform: translateX(-50%);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .navigator {

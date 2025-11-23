@@ -116,16 +116,17 @@ function newPaddedPage(...children: (Node | null)[]): HTMLDivElement {
     return setClass(newVertical(...children), "padding")
 }
 
-function newHeaderPanel(...children: (Node | null)[]): HTMLDivElement {
-    const div = setClass(document.createElement("div"), "header")
-    div.replaceChildren(...children.filter((e) => e !== null))
-    return div
-}
-
 function newFooterPanel(...children: (Node | null)[]): HTMLDivElement {
     const div = setClass(document.createElement("div"), "footer")
     div.replaceChildren(...children.filter((e) => e !== null))
     return div
+}
+
+function newFloatingButton(logo: HTMLElement, click: (this: GlobalEventHandlers, ev: MouseEvent) => any, color: string): HTMLButtonElement {
+    const button = setClass(newButton(logo, click), "floating")
+    button.style.backgroundColor = color
+    button.classList.remove("fixed")
+    return button
 }
 
 type AttribTitle = "STR" | "VIT" | "INT" | "AGI" | "SKL" | "Level"
@@ -140,11 +141,11 @@ const AttribColors = {
     Level: "#FFFFFF"
 }
 
-const NavigatorColors = {
+const AddButtonColors = {
     Notes: "#F4A259",
     Tasks: "#3FA9F5",
     Quests: "#A067FF",
-    Rewards: "#31D27A"
+    Rewards: "#F4C542"
 }
 
 interface PopupLine {
@@ -208,6 +209,12 @@ interface Symbols {
     coin: HTMLElement
     done: HTMLElement
     delete: HTMLElement
+
+    home: HTMLElement
+    notes: HTMLElement
+    tasks: HTMLElement
+    quests: HTMLElement
+    rewards: HTMLElement
 }
 
 let sounds: Sounds
@@ -361,6 +368,51 @@ function drawProgressBar(value: number, total: number, color: string): HTMLEleme
     return parent
 }
 
+function drawNavigationBar(active: number): HTMLElement {
+    let tabIndex = 0
+    function tab(icon: HTMLElement, title: string, click: (this: GlobalEventHandlers, ev: MouseEvent) => any): HTMLElement {
+        const iconNode = setDimensions(icon, "2rem", "2rem")
+        if (tabIndex === 4) {
+            iconNode.style.transform = "scale(0.8)"
+            iconNode.style.transformOrigin = "center"
+        }
+
+        const buttonNode = setClass(
+            newVertical(
+                iconNode,
+                setFontSize(newHeader(title, 2), "0.9rem")
+            ),
+            "center", "stretch"
+        )
+
+        buttonNode.style.gap = "0.25rem"
+        buttonNode.style.aspectRatio = "1"
+        if (tabIndex !== active) {
+            setClick(buttonNode, click)
+            buttonNode.style.backgroundColor = "#303030"
+        }
+
+        if (tabIndex === active - 1) {
+            buttonNode.style.borderTopRightRadius = "0.5rem"
+        }
+
+        if (tabIndex === active + 1) {
+            buttonNode.style.borderTopLeftRadius = "0.5rem"
+        }
+
+        tabIndex++
+        return buttonNode
+    }
+
+    return newFooterPanel(
+        tab(symbols.notes, "Notes", drawNotesPage),
+        tab(symbols.tasks, "Tasks", drawTasksPage),
+        tab(symbols.home, "Home", drawMainPage),
+        tab(symbols.quests, "Quests", drawQuestsPage),
+        tab(symbols.rewards, "Rewards", drawRewardsPage)
+    )
+}
+
 function drawAttrib(attrib: Attrib): HTMLElement {
     const color = AttribColors[attrib.title]
     return newVertical(
@@ -390,6 +442,64 @@ function drawMoney(): HTMLElement {
             )
         ),
         "stretch",
+    )
+}
+
+function drawNote(index: number): HTMLElement {
+    return setClass(
+        newHorizontal(
+            setClick(
+                setClass(
+                    setFontSize(newHeader(notes[index], 1), "1.1rem"),
+                    "flex-one", "vcenter-margined"
+                ),
+                () => drawNoteEditPage(index)
+            ),
+            setClass(
+                newButton(symbols.delete, () => {
+                    notes.splice(index, 1)
+                    saveState()
+                    drawNotesPage()
+                }),
+                "right", "vcenter-margined"
+            ),
+        ),
+        "boxed"
+    )
+}
+
+function drawNoteEditPage(index?: number) {
+    const input = newInput("Note", index === undefined ? "" : notes[index])
+    document.body.replaceChildren(
+        newPaddedPage(
+            newHorizontal(
+                newButton(symbols.back, drawNotesPage),
+                setClass(input, "stretch"),
+                newButton(symbols.done, () => {
+                    if (input.value === "") {
+                        return
+                    }
+
+                    if (index === undefined) {
+                        notes.push(input.value)
+                    } else {
+                        notes[index] = input.value
+                    }
+
+                    saveState()
+                    drawNotesPage()
+                })
+            )
+        ),
+        drawNavigationBar(0)
+    )
+}
+
+function drawNotesPage() {
+    document.body.replaceChildren(
+        newPaddedPage(...notes.map((_, index) => drawNote(index))),
+        newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawNoteEditPage(), AddButtonColors.Notes),
+        drawNavigationBar(0)
     )
 }
 
@@ -470,19 +580,16 @@ function drawTaskEditPage(index?: number) {
                 )
             ),
             drawSelector(attribSelector)
-        )
+        ),
+        drawNavigationBar(1)
     )
 }
 
 function drawTasksPage() {
     document.body.replaceChildren(
-        newHeaderPanel(
-            newButton(symbols.back, drawMainPage),
-            newHeader("Tasks", 1),
-            setClass(newButton(symbols.add, () => drawTaskEditPage()), "right")
-        ),
         newPaddedPage(...tasks.map(drawTask)),
-        drawMoney()
+        newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawTaskEditPage(), AddButtonColors.Tasks),
+        drawNavigationBar(1)
     )
 }
 
@@ -505,7 +612,7 @@ function drawQuest(quest: Quest, index: number): HTMLElement {
                     const popup = {
                         visible: true,
                         title: "Quest Completed!",
-                        lines: [{ text: quest.title, color: NavigatorColors.Quests }],
+                        lines: [{ text: quest.title, color: AddButtonColors.Quests }],
                         isQuest: true,
                     }
 
@@ -575,19 +682,16 @@ function drawQuestEditPage(index?: number) {
             ),
             drawSelector(attribSelector),
             drawSelector(pointSelector),
-        )
+        ),
+        drawNavigationBar(3)
     )
 }
 
 function drawQuestsPage() {
     document.body.replaceChildren(
-        newHeaderPanel(
-            newButton(symbols.back, drawMainPage),
-            newHeader("Quests", 1),
-            setClass(newButton(symbols.add, () => drawQuestEditPage()), "right")
-        ),
         newPaddedPage(...quests.map(drawQuest)),
-        drawMoney()
+        newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawQuestEditPage(), AddButtonColors.Quests),
+        drawNavigationBar(3)
     )
 }
 
@@ -684,101 +788,31 @@ function drawRewardEditPage(index?: number) {
                 )
             ),
             drawSelector(costSelector),
-        )
+        ),
+        drawNavigationBar(4)
     )
 }
 
 function drawRewardsPage() {
     document.body.replaceChildren(
-        newHeaderPanel(
-            newButton(symbols.back, drawMainPage),
-            newHeader("Rewards", 1),
-            setClass(newButton(symbols.add, () => drawRewardEditPage()), "right")
-        ),
-        newPaddedPage(...rewards.map(drawReward)),
-        drawMoney()
-    )
-}
-
-function drawNote(index: number): HTMLElement {
-    return setClass(
-        newHorizontal(
-            setClick(
-                setClass(
-                    setFontSize(newHeader(notes[index], 1), "1.1rem"),
-                    "flex-one", "vcenter-margined"
-                ),
-                () => drawNoteEditPage(index)
-            ),
-            setClass(
-                newButton(symbols.delete, () => {
-                    notes.splice(index, 1)
-                    saveState()
-                    drawNotesPage()
-                }),
-                "right", "vcenter-margined"
-            ),
-        ),
-        "boxed"
-    )
-}
-
-function drawNoteEditPage(index?: number) {
-    const input = newInput("Note", index === undefined ? "" : notes[index])
-    document.body.replaceChildren(
         newPaddedPage(
-            newHorizontal(
-                newButton(symbols.back, drawNotesPage),
-                setClass(input, "stretch"),
-                newButton(symbols.done, () => {
-                    if (input.value === "") {
-                        return
-                    }
-
-                    if (index === undefined) {
-                        notes.push(input.value)
-                    } else {
-                        notes[index] = input.value
-                    }
-
-                    saveState()
-                    drawNotesPage()
-                })
-            )
-        )
-    )
-}
-
-function drawNotesPage() {
-    document.body.replaceChildren(
-        newHeaderPanel(
-            newButton(symbols.back, drawMainPage),
-            newHeader("Notes", 1),
-            setClass(newButton(symbols.add, () => drawNoteEditPage()), "right")
+            setClass(
+                newVertical(
+                    newHorizontal(
+                        setDimensions(symbols.coin, "1.4rem", "1.4rem"),
+                        setClass(newHeader(String(money), 2), "right")
+                    )
+                ),
+                "boxed"
+            ),
+            ...rewards.map(drawReward)
         ),
-        newPaddedPage(...notes.map((_, index) => drawNote(index)))
+        newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawRewardEditPage(), AddButtonColors.Rewards),
+        drawNavigationBar(4)
     )
 }
 
 function drawMainPage() {
-    function navigator(title: NavigatorTitle, click: (this: GlobalEventHandlers, ev: MouseEvent) => any): HTMLElement {
-        const color = NavigatorColors[title]
-        return setBorder(
-            setColor(
-                setClick(
-                    setClass(
-                        setFontSize(newHeader(title, 1), "1.1rem"),
-                        "boxed", "center", "navigator"
-                    ),
-                    click
-                ),
-                color
-            ),
-            color
-        )
-
-    }
-
     document.body.replaceChildren(
         newPaddedPage(
             setClass(drawAttrib(level), "boxed"),
@@ -794,14 +828,9 @@ function drawMainPage() {
                     )
                 ),
                 "boxed"
-            ),
-            newHorizontal(
-                navigator("Notes", drawNotesPage),
-                navigator("Tasks", drawTasksPage),
-                navigator("Quests", drawQuestsPage),
-                navigator("Rewards", drawRewardsPage)
             )
-        )
+        ),
+        drawNavigationBar(2)
     )
 }
 
@@ -819,6 +848,12 @@ window.onload = () => {
         coin: document.getElementById("svg-icon-coin") as HTMLElement,
         done: document.getElementById("svg-icon-done") as HTMLElement,
         delete: document.getElementById("svg-icon-delete") as HTMLElement,
+
+        home: document.getElementById("svg-icon-home") as HTMLElement,
+        notes: document.getElementById("svg-icon-notes") as HTMLElement,
+        tasks: document.getElementById("svg-icon-tasks") as HTMLElement,
+        quests: document.getElementById("svg-icon-quests") as HTMLElement,
+        rewards: document.getElementById("svg-icon-coin") as HTMLElement,
     }, {
         get(target: Symbols, key: keyof Symbols) {
             const value = target[key]
