@@ -320,10 +320,15 @@ function drawSelector(selector: Selector): HTMLElement {
     for (let i = 0; i < selector.items.length; i++) {
         const item = selector.items[i]
 
-        const fontSize = "1.4rem"
-        let label: HTMLElement = setColor(setFontSize(newHeader(item.title, 2), fontSize), item.color)
+        let label: HTMLElement
         if (selector.prefixCoin) {
-            label = newHorizontal(setDimensions(symbols.coin, fontSize, fontSize), label)
+            const fontSize = "1.4rem"
+            label = newHorizontal(
+                setDimensions(symbols.coin, fontSize, fontSize),
+                setColor(setFontSize(newHeader(item.title, 2), fontSize), item.color)
+            )
+        } else {
+            label = setColor(newHeader(item.title, 1), item.color)
         }
 
         const button = setClick(
