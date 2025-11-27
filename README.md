@@ -1,6 +1,14 @@
 # Level Up
 Level up IRL
 
+<div align="center">
+<img src="img/2.jpg" width="19.5%" style="margin: 0;">
+<img src="img/3.jpg" width="19.5%" style="margin: 0;">
+<img src="img/1.jpg" width="19.5%" style="margin: 0;">
+<img src="img/4.jpg" width="19.5%" style="margin: 0;">
+<img src="img/5.jpg" width="19.5%" style="margin: 0;">
+</div>
+
 ## Quick Start
 ```console
 $ npm run setup # Only once, after cloning the repo
@@ -15,20 +23,6 @@ $ npm run build
 - [Purchase Success](https://pixabay.com/sound-effects/purchase-success-384963/) by [freesound_CrunchpixStudio](https://pixabay.com/users/freesound_crunchpixstudio-49769582/)
 - [Level Up](https://pixabay.com/sound-effects/level-up-47165/) by [freesound_community](https://pixabay.com/users/freesound_community-46691455/)
 - [GoodResult](https://pixabay.com/sound-effects/goodresult-82807/) by [freesound_community](https://pixabay.com/users/freesound_community-46691455/)
-
-## Showcase
-
-| Home |
-|---|
-| <img src="img/1.jpg" width="360"/> |
-
-| Notes | Tasks |
-|---|---|
-| <img src="img/2.jpg" width="250"/> | <img src="img/3.jpg" width="250"/> |
-
-| Quests | Rewards |
-|---|---|
-| <img src="img/4.jpg" width="250"/> | <img src="img/5.jpg" width="250"/> |
 
 ## Icons
 ChatGPT
