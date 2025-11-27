@@ -18,9 +18,13 @@ $ npm run build
 
 ## Showcase
 
-| Home | Notes | Tasks |
-|---|---|---|
-| <img src="img/1.jpg" width="250"/> | <img src="img/2.jpg" width="250"/> | <img src="img/3.jpg" width="250"/> |
+| Home |
+|---|
+| <img src="img/1.jpg" width="360"/> |
+
+| Notes | Tasks |
+|---|---|
+| <img src="img/2.jpg" width="250"/> | <img src="img/3.jpg" width="250"/> |
 
 | Quests | Rewards |
 |---|---|
