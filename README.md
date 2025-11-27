@@ -17,7 +17,14 @@ $ npm run build
 - [GoodResult](https://pixabay.com/sound-effects/goodresult-82807/) by [freesound_community](https://pixabay.com/users/freesound_community-46691455/)
 
 ## Showcase
-![Img 1](img/1.jpg) ![Img 2](img/2.jpg) ![Img 3](img/3.jpg) ![Img 4](img/4.jpg) ![Img 5](img/5.jpg)
+
+| Home | Notes | Tasks |
+|---|---|---|
+| <img src="img/1.jpg" width="250"/> | <img src="img/2.jpg" width="250"/> | <img src="img/3.jpg" width="250"/> |
+
+| Quests | Rewards |
+|---|---|
+| <img src="img/4.jpg" width="250"/> | <img src="img/5.jpg" width="250"/> |
 
 ## Icons
 ChatGPT
