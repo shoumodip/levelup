@@ -19,4 +19,4 @@ $ npm run build
 ## Icons
 ChatGPT
 
-![Meme](meme.png)
+![Meme](img/meme.png)
