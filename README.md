@@ -16,6 +16,9 @@ $ npm run build
 - [Level Up](https://pixabay.com/sound-effects/level-up-47165/) by [freesound_community](https://pixabay.com/users/freesound_community-46691455/)
 - [GoodResult](https://pixabay.com/sound-effects/goodresult-82807/) by [freesound_community](https://pixabay.com/users/freesound_community-46691455/)
 
+## Showcase
+![Img 1](img/1.jpg) ![Img 2](img/2.jpg) ![Img 3](img/3.jpg) ![Img 4](img/4.jpg) ![Img 5](img/5.jpg)
+
 ## Icons
 ChatGPT
 
