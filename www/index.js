@@ -118,6 +118,7 @@ const AttribColors = {
     INT: "#3498DB",
     AGI: "#F1C40F",
     SKL: "#A55EEA",
+    WIL: "#D9822B",
     Level: "#FFFFFF"
 };
 const AddButtonColors = {
@@ -534,6 +535,7 @@ window.onload = () => {
         attribs.push({ title: "INT", level: 1, points: 0, needed: 1, scalar: 1 });
         attribs.push({ title: "AGI", level: 1, points: 0, needed: 1, scalar: 1 });
         attribs.push({ title: "SKL", level: 1, points: 0, needed: 1, scalar: 1 });
+        attribs.push({ title: "WIL", level: 1, points: 0, needed: 1, scalar: 1 });
     }
     const rewardsSave = localStorage["levelup#rewards"];
     if (rewardsSave) {
