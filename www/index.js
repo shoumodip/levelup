@@ -8,6 +8,11 @@ function todayTime() {
     time.setMilliseconds(0);
     return time.getTime();
 }
+function playSound(sound) {
+    sound.pause();
+    sound.currentTime = 0;
+    sound.play();
+}
 function numberToRomanString(num) {
     const table = {
         M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1
@@ -310,10 +315,10 @@ function drawTask(task, index) {
         const popup = { visible: false, title: "", lines: [] };
         addPointsOverall(attribs[task.attrib], 1, popup);
         if (popup.visible) {
-            sounds.levelup.play();
+            playSound(sounds.levelup);
         }
         else {
-            sounds.taskCompleted.play();
+            playSound(sounds.taskCompleted);
         }
         done.remove();
         drawPopup(popup, drawTasksPage);
@@ -361,7 +366,7 @@ function drawQuest(quest, index) {
         };
         quests.splice(index, 1);
         node.remove();
-        sounds.questCompleted.play();
+        playSound(sounds.questCompleted);
         addPointsOverall(attribs[quest.attrib], quest.points, popup);
         done.remove();
         drawPopup(popup, drawQuestsPage);
@@ -423,7 +428,7 @@ function moneyColor(money) {
 function drawReward(reward, index) {
     return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(reward.title, 1), newHorizontal(setDimensions(symbols.coin, "1.1rem", "1.1rem"), setColor(newHeader(String(reward.cost), 2), moneyColor(reward.cost)))), "flex-one"), () => drawRewardEditPage(index)), domMaybe(setClass(newButton(symbols.done, () => {
         money -= reward.cost;
-        sounds.buyReward.play();
+        playSound(sounds.buyReward);
         saveState();
         drawRewardsPage();
     }), "right", "vcenter-margined"), money >= reward.cost)), "boxed");
