@@ -21,11 +21,12 @@ function numberToRomanString(num) {
     }
     return roman;
 }
-function pointsNeeded(level, scalar) {
-    if (level <= 2) {
-        return level * scalar;
+function pointsNeeded(attrib) {
+    const scalar = attrib.title === "Level" ? 6 : 1;
+    if (attrib.level <= 2) {
+        return attrib.level * scalar;
     }
-    return (level - 2) * 5 * scalar;
+    return (attrib.level - 2) * 5 * scalar;
 }
 function setClass(element, ...names) {
     element.classList.add(...names);
@@ -154,7 +155,7 @@ function addPointsOverall(attrib, points, popup) {
             while (attrib.points >= attrib.needed) {
                 attrib.level++;
                 attrib.points -= attrib.needed;
-                attrib.needed = pointsNeeded(attrib.level, attrib.scalar);
+                attrib.needed = pointsNeeded(attrib);
             }
             popup.visible = true;
             if (!popup.title) {
@@ -301,10 +302,11 @@ function drawNoteEditPage(index) {
     }))), drawNavigationBar(0));
 }
 function drawNotesPage() {
-    document.body.replaceChildren(newPaddedPage(...notes.map((_, index) => drawNote(index))), newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawNoteEditPage(), AddButtonColors.Notes), drawNavigationBar(0));
+    document.body.replaceChildren(newPaddedPage(...notes.map((_, index) => drawNote(index))), setClass(document.createElement("div"), "footer-spacer"), newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawNoteEditPage(), AddButtonColors.Notes), drawNavigationBar(0));
 }
 function drawTask(task, index) {
-    return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(task.title, 1), setColor(newHeader(attribs[task.attrib].title, 2), AttribColors[attribs[task.attrib].title])), "flex-one"), () => drawTaskEditPage(index)), domMaybe(setClass(newButton(symbols.done, () => {
+    let done;
+    done = newButton(symbols.done, () => {
         task.lastDone = todayTime();
         const popup = { visible: false, title: "", lines: [] };
         addPointsOverall(attribs[task.attrib], 1, popup);
@@ -314,8 +316,10 @@ function drawTask(task, index) {
         else {
             sounds.taskCompleted.play();
         }
+        done.remove();
         drawPopup(popup, drawTasksPage);
-    }), "right", "vcenter-margined"), todayTime() !== task.lastDone)), "boxed");
+    });
+    return setClass(newHorizontal(setClick(setClass(newVertical(newHeader(task.title, 1), setColor(newHeader(attribs[task.attrib].title, 2), AttribColors[attribs[task.attrib].title])), "flex-one"), () => drawTaskEditPage(index)), domMaybe(setClass(done, "right", "vcenter-margined"), todayTime() !== task.lastDone)), "boxed");
 }
 function drawTaskEditPage(index) {
     const task = index === undefined ? undefined : tasks[index];
@@ -344,11 +348,12 @@ function drawTaskEditPage(index) {
     }), task !== undefined)), drawSelector(attribSelector)), drawNavigationBar(1));
 }
 function drawTasksPage() {
-    document.body.replaceChildren(newPaddedPage(...tasks.map(drawTask)), newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawTaskEditPage(), AddButtonColors.Tasks), drawNavigationBar(1));
+    document.body.replaceChildren(newPaddedPage(...tasks.map(drawTask)), setClass(document.createElement("div"), "footer-spacer"), newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawTaskEditPage(), AddButtonColors.Tasks), drawNavigationBar(1));
 }
 function drawQuest(quest, index) {
     let node;
-    node = setClass(newHorizontal(setClick(setClass(newVertical(newHeader(quest.title, 1), setColor(newHeader(`${attribs[quest.attrib].title} +${quest.points}`, 2), AttribColors[attribs[quest.attrib].title])), "flex-one"), () => drawQuestEditPage(index)), setClass(newButton(symbols.done, () => {
+    let done;
+    done = newButton(symbols.done, () => {
         const popup = {
             visible: true,
             title: "Quest Completed!",
@@ -359,8 +364,10 @@ function drawQuest(quest, index) {
         node.remove();
         sounds.questCompleted.play();
         addPointsOverall(attribs[quest.attrib], quest.points, popup);
+        done.remove();
         drawPopup(popup, drawQuestsPage);
-    }), "right", "vcenter-margined")), "boxed");
+    });
+    node = setClass(newHorizontal(setClick(setClass(newVertical(newHeader(quest.title, 1), setColor(newHeader(`${attribs[quest.attrib].title} +${quest.points}`, 2), AttribColors[attribs[quest.attrib].title])), "flex-one"), () => drawQuestEditPage(index)), setClass(done, "right", "vcenter-margined")), "boxed");
     return node;
 }
 function drawQuestEditPage(index) {
@@ -400,7 +407,7 @@ function drawQuestEditPage(index) {
     }), quest !== undefined)), drawSelector(attribSelector), drawSelector(pointSelector)), drawNavigationBar(3));
 }
 function drawQuestsPage() {
-    document.body.replaceChildren(newPaddedPage(...quests.map(drawQuest)), newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawQuestEditPage(), AddButtonColors.Quests), drawNavigationBar(3));
+    document.body.replaceChildren(newPaddedPage(...quests.map(drawQuest)), setClass(document.createElement("div"), "footer-spacer"), newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawQuestEditPage(), AddButtonColors.Quests), drawNavigationBar(3));
 }
 function moneyColor(money) {
     if (money == 3) {
@@ -454,10 +461,10 @@ function drawRewardEditPage(index) {
     }), reward !== undefined)), drawSelector(costSelector)), drawNavigationBar(4));
 }
 function drawRewardsPage() {
-    document.body.replaceChildren(newPaddedPage(setClass(newVertical(newHorizontal(setDimensions(symbols.coin, "1.4rem", "1.4rem"), setClass(newHeader(String(money), 2), "right"))), "boxed"), ...rewards.map(drawReward)), newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawRewardEditPage(), AddButtonColors.Rewards), drawNavigationBar(4));
+    document.body.replaceChildren(newPaddedPage(setClass(newVertical(newHorizontal(setDimensions(symbols.coin, "1.4rem", "1.4rem"), setClass(newHeader(String(money), 2), "right"))), "boxed"), ...rewards.map(drawReward)), setClass(document.createElement("div"), "footer-spacer"), newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawRewardEditPage(), AddButtonColors.Rewards), drawNavigationBar(4));
 }
 function drawMainPage() {
-    document.body.replaceChildren(newPaddedPage(setClass(drawAttrib(level), "boxed"), setClass(newVertical(...attribs.map(drawAttrib)), "boxed"), setClass(newVertical(newHorizontal(setDimensions(symbols.coin, "1.4rem", "1.4rem"), setClass(newHeader(String(money), 2), "right"))), "boxed")), drawNavigationBar(2));
+    document.body.replaceChildren(newPaddedPage(setClass(drawAttrib(level), "boxed"), setClass(newVertical(...attribs.map(drawAttrib)), "boxed"), setClass(newVertical(newHorizontal(setDimensions(symbols.coin, "1.4rem", "1.4rem"), setClass(newHeader(String(money), 2), "right"))), "boxed")), setClass(document.createElement("div"), "footer-spacer"), drawNavigationBar(2));
 }
 window.onload = () => {
     sounds = {
@@ -501,7 +508,7 @@ window.onload = () => {
     }
     else {
         needToSave = true;
-        level = { title: "Level", level: 1, points: 0, needed: 5, scalar: 5 };
+        level = { title: "Level", level: 1, points: 0, needed: 6 };
     }
     const notesSave = localStorage["levelup#notes"];
     if (notesSave) {
@@ -530,12 +537,12 @@ window.onload = () => {
     }
     else {
         needToSave = true;
-        attribs.push({ title: "STR", level: 1, points: 0, needed: 1, scalar: 1 });
-        attribs.push({ title: "VIT", level: 1, points: 0, needed: 1, scalar: 1 });
-        attribs.push({ title: "INT", level: 1, points: 0, needed: 1, scalar: 1 });
-        attribs.push({ title: "AGI", level: 1, points: 0, needed: 1, scalar: 1 });
-        attribs.push({ title: "SKL", level: 1, points: 0, needed: 1, scalar: 1 });
-        attribs.push({ title: "WIL", level: 1, points: 0, needed: 1, scalar: 1 });
+        attribs.push({ title: "STR", level: 1, points: 0, needed: 1 });
+        attribs.push({ title: "VIT", level: 1, points: 0, needed: 1 });
+        attribs.push({ title: "INT", level: 1, points: 0, needed: 1 });
+        attribs.push({ title: "AGI", level: 1, points: 0, needed: 1 });
+        attribs.push({ title: "SKL", level: 1, points: 0, needed: 1 });
+        attribs.push({ title: "WIL", level: 1, points: 0, needed: 1 });
     }
     const rewardsSave = localStorage["levelup#rewards"];
     if (rewardsSave) {

@@ -209,6 +209,11 @@ body, .vertical {
     padding-bottom: 0.5rem;
 }
 
+.footer-spacer {
+    height: calc(20vw - 0.6rem);
+    flex-shrink: 0;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to   { opacity: 1; }

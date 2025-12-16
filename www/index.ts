@@ -24,12 +24,12 @@ function numberToRomanString(num: number): string {
     return roman
 }
 
-function pointsNeeded(level: number, scalar: number): number {
-    if (level <= 2) {
-        return level * scalar
+function pointsNeeded(attrib: Attrib): number {
+    const scalar = attrib.title === "Level" ? 6 : 1
+    if (attrib.level <= 2) {
+        return attrib.level * scalar
     }
-
-    return (level - 2) * 5 * scalar
+    return (attrib.level - 2) * 5 * scalar
 }
 
 function setClass<T extends HTMLElement>(element: T, ...names: string[]): T {
@@ -189,7 +189,6 @@ interface Attrib {
     level: number
     points: number
     needed: number
-    scalar: number
 }
 
 interface Reward {
@@ -249,7 +248,7 @@ function addPointsOverall(attrib: Attrib, points: number, popup: Popup) {
             while (attrib.points >= attrib.needed) {
                 attrib.level++
                 attrib.points -= attrib.needed
-                attrib.needed = pointsNeeded(attrib.level, attrib.scalar)
+                attrib.needed = pointsNeeded(attrib)
             }
 
             popup.visible = true
@@ -499,12 +498,30 @@ function drawNoteEditPage(index?: number) {
 function drawNotesPage() {
     document.body.replaceChildren(
         newPaddedPage(...notes.map((_, index) => drawNote(index))),
+        setClass(document.createElement("div"), "footer-spacer"),
         newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawNoteEditPage(), AddButtonColors.Notes),
         drawNavigationBar(0)
     )
 }
 
 function drawTask(task: Task, index: number): HTMLElement {
+    let done: HTMLElement
+    done = newButton(symbols.done, () => {
+        task.lastDone = todayTime()
+
+        const popup = { visible: false, title: "", lines: [] }
+        addPointsOverall(attribs[task.attrib], 1, popup)
+
+        if (popup.visible) {
+            sounds.levelup.play()
+        } else {
+            sounds.taskCompleted.play()
+        }
+
+        done.remove()
+        drawPopup(popup, drawTasksPage)
+    })
+
     return setClass(
         newHorizontal(
             setClick(
@@ -518,23 +535,7 @@ function drawTask(task: Task, index: number): HTMLElement {
                 () => drawTaskEditPage(index)
             ),
             domMaybe(
-                setClass(
-                    newButton(symbols.done, () => {
-                        task.lastDone = todayTime()
-
-                        const popup = { visible: false, title: "", lines: [] }
-                        addPointsOverall(attribs[task.attrib], 1, popup)
-
-                        if (popup.visible) {
-                            sounds.levelup.play()
-                        } else {
-                            sounds.taskCompleted.play()
-                        }
-
-                        drawPopup(popup, drawTasksPage)
-                    }),
-                    "right", "vcenter-margined"
-                ),
+                setClass(done, "right", "vcenter-margined"),
                 todayTime() !== task.lastDone
             )
         ),
@@ -589,6 +590,7 @@ function drawTaskEditPage(index?: number) {
 function drawTasksPage() {
     document.body.replaceChildren(
         newPaddedPage(...tasks.map(drawTask)),
+        setClass(document.createElement("div"), "footer-spacer"),
         newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawTaskEditPage(), AddButtonColors.Tasks),
         drawNavigationBar(1)
     )
@@ -596,6 +598,25 @@ function drawTasksPage() {
 
 function drawQuest(quest: Quest, index: number): HTMLElement {
     let node: HTMLElement
+    let done: HTMLElement
+    done = newButton(symbols.done, () => {
+        const popup = {
+            visible: true,
+            title: "Quest Completed!",
+            lines: [{ text: quest.title, color: AddButtonColors.Quests }],
+            isQuest: true,
+        }
+
+        quests.splice(index, 1)
+        node.remove()
+
+        sounds.questCompleted.play()
+        addPointsOverall(attribs[quest.attrib], quest.points, popup)
+
+        done.remove()
+        drawPopup(popup, drawQuestsPage)
+    })
+
     node = setClass(
         newHorizontal(
             setClick(
@@ -608,24 +629,7 @@ function drawQuest(quest: Quest, index: number): HTMLElement {
                 ),
                 () => drawQuestEditPage(index)
             ),
-            setClass(
-                newButton(symbols.done, () => {
-                    const popup = {
-                        visible: true,
-                        title: "Quest Completed!",
-                        lines: [{ text: quest.title, color: AddButtonColors.Quests }],
-                        isQuest: true,
-                    }
-
-                    quests.splice(index, 1)
-                    node.remove()
-
-                    sounds.questCompleted.play()
-                    addPointsOverall(attribs[quest.attrib], quest.points, popup)
-                    drawPopup(popup, drawQuestsPage)
-                }),
-                "right", "vcenter-margined"
-            )
+            setClass(done, "right", "vcenter-margined")
         ),
         "boxed"
     )
@@ -691,6 +695,7 @@ function drawQuestEditPage(index?: number) {
 function drawQuestsPage() {
     document.body.replaceChildren(
         newPaddedPage(...quests.map(drawQuest)),
+        setClass(document.createElement("div"), "footer-spacer"),
         newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawQuestEditPage(), AddButtonColors.Quests),
         drawNavigationBar(3)
     )
@@ -808,6 +813,7 @@ function drawRewardsPage() {
             ),
             ...rewards.map(drawReward)
         ),
+        setClass(document.createElement("div"), "footer-spacer"),
         newFloatingButton(setDimensions(symbols.add, "2.5rem", "2.5rem"), () => drawRewardEditPage(), AddButtonColors.Rewards),
         drawNavigationBar(4)
     )
@@ -831,6 +837,7 @@ function drawMainPage() {
                 "boxed"
             )
         ),
+        setClass(document.createElement("div"), "footer-spacer"),
         drawNavigationBar(2)
     )
 }
@@ -880,7 +887,7 @@ window.onload = () => {
         level = JSON.parse(levelSave)
     } else {
         needToSave = true
-        level = { title: "Level", level: 1, points: 0, needed: 5, scalar: 5 }
+        level = { title: "Level", level: 1, points: 0, needed: 6 }
     }
 
     const notesSave = localStorage["levelup#notes"]
@@ -909,12 +916,12 @@ window.onload = () => {
         attribs = JSON.parse(attribsSave)
     } else {
         needToSave = true
-        attribs.push({ title: "STR", level: 1, points: 0, needed: 1, scalar: 1 })
-        attribs.push({ title: "VIT", level: 1, points: 0, needed: 1, scalar: 1 })
-        attribs.push({ title: "INT", level: 1, points: 0, needed: 1, scalar: 1 })
-        attribs.push({ title: "AGI", level: 1, points: 0, needed: 1, scalar: 1 })
-        attribs.push({ title: "SKL", level: 1, points: 0, needed: 1, scalar: 1 })
-        attribs.push({ title: "WIL", level: 1, points: 0, needed: 1, scalar: 1 })
+        attribs.push({ title: "STR", level: 1, points: 0, needed: 1 })
+        attribs.push({ title: "VIT", level: 1, points: 0, needed: 1 })
+        attribs.push({ title: "INT", level: 1, points: 0, needed: 1 })
+        attribs.push({ title: "AGI", level: 1, points: 0, needed: 1 })
+        attribs.push({ title: "SKL", level: 1, points: 0, needed: 1 })
+        attribs.push({ title: "WIL", level: 1, points: 0, needed: 1 })
     }
 
     const rewardsSave = localStorage["levelup#rewards"]
