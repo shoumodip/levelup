@@ -25,7 +25,7 @@ function numberToRomanString(num: number): string {
 }
 
 function pointsNeeded(attrib: Attrib): number {
-    const scalar = attrib.title === "Level" ? 6 : 1
+    const scalar = attrib.title === "Level" ? 5 : 1
     if (attrib.level <= 2) {
         return attrib.level * scalar
     }
@@ -129,7 +129,7 @@ function newFloatingButton(logo: HTMLElement, click: (this: GlobalEventHandlers,
     return button
 }
 
-type AttribTitle = "STR" | "VIT" | "INT" | "AGI" | "SKL" | "WIL" | "Level"
+type AttribTitle = "STR" | "VIT" | "INT" | "AGI" | "SKL" | "Level"
 type NavigatorTitle = "Notes" | "Tasks" | "Quests" | "Rewards"
 
 const AttribColors = {
@@ -138,7 +138,6 @@ const AttribColors = {
     INT: "#3498DB",
     AGI: "#F1C40F",
     SKL: "#A55EEA",
-    WIL: "#D9822B",
     Level: "#FFFFFF"
 }
 
@@ -887,7 +886,7 @@ window.onload = () => {
         level = JSON.parse(levelSave)
     } else {
         needToSave = true
-        level = { title: "Level", level: 1, points: 0, needed: 6 }
+        level = { title: "Level", level: 1, points: 0, needed: 5 }
     }
 
     const notesSave = localStorage["levelup#notes"]
@@ -921,7 +920,6 @@ window.onload = () => {
         attribs.push({ title: "INT", level: 1, points: 0, needed: 1 })
         attribs.push({ title: "AGI", level: 1, points: 0, needed: 1 })
         attribs.push({ title: "SKL", level: 1, points: 0, needed: 1 })
-        attribs.push({ title: "WIL", level: 1, points: 0, needed: 1 })
     }
 
     const rewardsSave = localStorage["levelup#rewards"]

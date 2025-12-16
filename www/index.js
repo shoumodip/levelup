@@ -22,7 +22,7 @@ function numberToRomanString(num) {
     return roman;
 }
 function pointsNeeded(attrib) {
-    const scalar = attrib.title === "Level" ? 6 : 1;
+    const scalar = attrib.title === "Level" ? 5 : 1;
     if (attrib.level <= 2) {
         return attrib.level * scalar;
     }
@@ -119,7 +119,6 @@ const AttribColors = {
     INT: "#3498DB",
     AGI: "#F1C40F",
     SKL: "#A55EEA",
-    WIL: "#D9822B",
     Level: "#FFFFFF"
 };
 const AddButtonColors = {
@@ -508,7 +507,7 @@ window.onload = () => {
     }
     else {
         needToSave = true;
-        level = { title: "Level", level: 1, points: 0, needed: 6 };
+        level = { title: "Level", level: 1, points: 0, needed: 5 };
     }
     const notesSave = localStorage["levelup#notes"];
     if (notesSave) {
@@ -542,7 +541,6 @@ window.onload = () => {
         attribs.push({ title: "INT", level: 1, points: 0, needed: 1 });
         attribs.push({ title: "AGI", level: 1, points: 0, needed: 1 });
         attribs.push({ title: "SKL", level: 1, points: 0, needed: 1 });
-        attribs.push({ title: "WIL", level: 1, points: 0, needed: 1 });
     }
     const rewardsSave = localStorage["levelup#rewards"];
     if (rewardsSave) {
