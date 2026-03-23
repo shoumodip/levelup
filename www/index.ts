@@ -30,14 +30,6 @@ function numberToRomanString(num: number): string {
     return roman
 }
 
-function pointsNeeded(attrib: Attrib): number {
-    const scalar = attrib.title === "Level" ? 5 : 1
-    if (attrib.level <= 2) {
-        return attrib.level * scalar
-    }
-    return (attrib.level - 2) * 5 * scalar
-}
-
 function setClass<T extends HTMLElement>(element: T, ...names: string[]): T {
     element.classList.add(...names)
     return element
@@ -253,7 +245,7 @@ function addPointsOverall(attrib: Attrib, points: number, popup: Popup) {
             while (attrib.points >= attrib.needed) {
                 attrib.level++
                 attrib.points -= attrib.needed
-                attrib.needed = pointsNeeded(attrib)
+                attrib.needed = attrib.level * (attrib.title === "Level" ? 5 : 1)
             }
 
             popup.visible = true
